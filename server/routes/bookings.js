@@ -170,4 +170,32 @@ router.post("/bookings/:bookingId/cancel", requireAuth, (req, res) => {
   });
 });
 
+// GET user's bookings and waitlists
+router.get("/bookings", requireAuth, (req, res) => {
+  const userId = req.user.id;
+  
+  db.all(
+    `SELECT b.id as booking_id, b.slot_id, b.status as booking_status, s.start_time, s.end_time 
+     FROM bookings b 
+     JOIN slots s ON b.slot_id = s.id 
+     WHERE b.user_id = ? AND b.status != 'CANCELED'`,
+    [userId],
+    (err, bookings) => {
+      if (err) return res.status(500).json({ error: err.message });
+      
+      db.all(
+        `SELECT w.id as waitlist_id, w.slot_id, w.status as waitlist_status, s.start_time, s.end_time 
+         FROM waitlist w 
+         JOIN slots s ON w.slot_id = s.id 
+         WHERE w.user_id = ? AND w.status = 'WAITING'`,
+        [userId],
+        (err2, waitlists) => {
+          if (err2) return res.status(500).json({ error: err2.message });
+          res.json({ bookings, waitlists });
+        }
+      );
+    }
+  );
+});
+
 module.exports = router;

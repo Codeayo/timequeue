@@ -38,4 +38,36 @@ router.get("/", (req, res) => {
   });
 });
 
+// Get bookings and waitlist for a specific slot (HOST only)
+router.get("/:slotId/bookings", requireAuth, requireRole("HOST"), (req, res) => {
+  const slotId = req.params.slotId;
+  
+  db.get(`SELECT * FROM slots WHERE id = ? AND host_id = ?`, [slotId, req.user.id], (err, slot) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!slot) return res.status(403).json({ error: "Not authorized to view this slot" });
+    
+    db.all(
+      `SELECT b.id, b.status, u.name, u.email 
+       FROM bookings b JOIN users u ON b.user_id = u.id 
+       WHERE b.slot_id = ? AND b.status != 'CANCELED'`, 
+      [slotId], 
+      (err2, bookings) => {
+        if (err2) return res.status(500).json({ error: err2.message });
+        
+        db.all(
+          `SELECT w.id, w.status, w.created_at, u.name, u.email 
+           FROM waitlist w JOIN users u ON w.user_id = u.id 
+           WHERE w.slot_id = ? AND w.status = 'WAITING' 
+           ORDER BY w.created_at ASC`,
+          [slotId],
+          (err3, waitlists) => {
+            if (err3) return res.status(500).json({ error: err3.message });
+            res.json({ bookings, waitlists });
+          }
+        );
+      }
+    );
+  });
+});
+
 module.exports = router;
