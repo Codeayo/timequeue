@@ -1,55 +1,126 @@
 <template>
-  <div class="page-wrapper fade-up">
-    <!-- Rich Header Banner -->
-    <div class="page-banner">
-      <div class="banner-content fade-up delay-100 container">
-        <h2 class="serif-title">Your Itinerary</h2>
-        <p class="banner-subtitle">Review your upcoming reservations and manage your waitlist status.</p>
+  <div>
+    <!-- Rich Hero Banner -->
+    <div class="bookings-hero">
+      <div class="bookings-hero-overlay"></div>
+      <div class="bookings-hero-bg"></div>
+      <div class="container bookings-hero-inner">
+        <div class="bookings-hero-text">
+          <p class="hero-eyebrow fade-up">🍷 Your Dining Journey</p>
+          <h1 class="bookings-hero-title fade-up delay-100">My <em>Reservations</em></h1>
+          <p class="bookings-hero-sub fade-up delay-200">Manage your upcoming dining times and track your waitlist position.</p>
+          <div class="bookings-hero-stats fade-up delay-300">
+            <div class="hero-stat">
+              <span class="hero-stat-num">{{ bookings.length }}</span>
+              <span class="hero-stat-label">Confirmed</span>
+            </div>
+            <div class="hero-stat-div"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-num">{{ waitlists.length }}</span>
+              <span class="hero-stat-label">On Waitlist</span>
+            </div>
+          </div>
+        </div>
+        <div class="bookings-hero-photo">
+          <img
+            src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&auto=format&fit=crop&q=80"
+            alt="Fine dining table setting"
+          />
+        </div>
       </div>
     </div>
 
-    <div class="container content-section pb-10">
-      <div v-if="loading" class="text-center mt-5 text-muted fade-up delay-200">Loading your itinerary...</div>
-      <div v-else-if="error" class="error-banner mb-5 text-center fade-up delay-200">{{ error }}</div>
-      <div v-else class="fade-up delay-200">
-        
-        <!-- Confirmed Bookings -->
-        <section class="mb-5">
-          <h3 class="section-title">Confirmed Reservations</h3>
-          <div v-if="bookings.length === 0" class="empty-layout text-center">
-            <p>You have no upcoming dining reservations.</p>
-            <RouterLink to="/slots" class="primary-btn mt-3 inline-btn">Find a Table</RouterLink>
+    <div class="container content-section">
+      <div v-if="loading" class="text-center py-lg fade-up">
+        <div class="spinner"></div>
+        <p class="text-muted">Loading your itinerary...</p>
+      </div>
+
+      <div v-else-if="error" class="inline-error fade-up">{{ error }}</div>
+
+      <div v-else class="two-col-layout fade-up delay-100">
+        <!-- Confirmed Reservations -->
+        <section class="section">
+          <div class="section-header">
+            <div class="section-header-left">
+              <span class="section-icon">🍽️</span>
+              <h3>Confirmed Reservations</h3>
+            </div>
+            <span v-if="bookings.length" class="badge success">{{ bookings.length }} Upcoming</span>
           </div>
-          <div v-else class="list-grid">
-            <div v-for="b in bookings" :key="b.booking_id" class="ticket-card dash-card">
-              <div class="info">
-                <h4>{{ formatTime(b.start_time) }}</h4>
-                <p class="text-muted italic text-sm">Dining until {{ formatTimeOnly(b.end_time) }}</p>
-                <div class="status-indicator success mt-3">
-                  <span class="dot"></span> Confirmed
+
+          <div v-if="bookings.length === 0" class="empty-card">
+            <span class="empty-card-icon">📅</span>
+            <div>
+              <p class="empty-card-title">No upcoming reservations</p>
+              <p class="empty-card-sub">You haven't booked a table yet.</p>
+            </div>
+            <RouterLink to="/slots" class="empty-card-cta">Browse Tables →</RouterLink>
+          </div>
+
+          <div v-else class="reservation-list">
+            <div v-for="b in bookings" :key="b.booking_id" class="reservation-item confirmed-item">
+              <!-- Watermark -->
+              <span class="res-watermark">🍷</span>
+              <!-- Left accent -->
+              <div class="res-accent confirmed-accent"></div>
+              <!-- Date badge -->
+              <div class="res-date-badge">
+                <span class="bd">{{ formatDayMonth(b.start_time).day }}</span>
+                <span class="bm">{{ formatDayMonth(b.start_time).month }}</span>
+              </div>
+              <div class="res-info">
+                <h4>{{ formatDateTime(b.start_time) }}</h4>
+                <p class="text-muted text-sm">{{ formatDayMonth(b.start_time).weekday }} · Dining until {{ formatTimeOnly(b.end_time) }}</p>
+                <div class="res-countdown" v-if="countdown(b.start_time)">⏱ {{ countdown(b.start_time) }}</div>
+                <div class="res-status confirmed">
+                  <span class="status-dot pulse"></span> Confirmed
                 </div>
               </div>
-              <button @click="cancelBooking(b.booking_id)" :disabled="actionLoading === b.booking_id" class="cancel-link">
-                {{ actionLoading === b.booking_id ? 'Canceling...' : 'Cancel Reservation' }}
-              </button>
+              <div class="res-action">
+                <button @click="cancelBooking(b.booking_id)" :disabled="actionLoading === b.booking_id" class="cancel-btn secondary">
+                  {{ actionLoading === b.booking_id ? 'Canceling...' : 'Cancel' }}
+                </button>
+              </div>
             </div>
           </div>
         </section>
 
-        <!-- Waitlist -->
-        <section>
-          <h3 class="section-title">Waitlist Status</h3>
-          <div v-if="waitlists.length === 0" class="empty-layout text-center">
-            <p>You are not currently on any waitlists.</p>
+        <!-- Waitlist Entries -->
+        <section class="section">
+          <div class="section-header">
+            <div class="section-header-left">
+              <span class="section-icon">⏳</span>
+              <h3>Waitlist</h3>
+            </div>
+            <span v-if="waitlists.length" class="badge warning">{{ waitlists.length }} Waiting</span>
           </div>
-          <div v-else class="list-grid">
-            <div v-for="w in waitlists" :key="w.waitlist_id" class="ticket-card dash-card waitlist-card">
-              <div class="info">
-                <h4>{{ formatTime(w.start_time) }}</h4>
-                <p class="text-muted italic text-sm">Dining until {{ formatTimeOnly(w.end_time) }}</p>
-                <div class="status-indicator warning mt-3">
-                  <span class="dot"></span> Waiting for Availability
+
+          <div v-if="waitlists.length === 0" class="empty-card">
+            <span class="empty-card-icon">✅</span>
+            <div>
+              <p class="empty-card-title">No waitlist entries</p>
+              <p class="empty-card-sub">You're not waiting on any full slots.</p>
+            </div>
+          </div>
+
+          <div v-else class="reservation-list">
+            <div v-for="w in waitlists" :key="w.waitlist_id" class="reservation-item waitlist-item">
+              <span class="res-watermark">⏰</span>
+              <div class="res-accent waitlist-accent"></div>
+              <div class="res-date-badge waitlist-badge">
+                <span class="bd">{{ formatDayMonth(w.start_time).day }}</span>
+                <span class="bm">{{ formatDayMonth(w.start_time).month }}</span>
+              </div>
+              <div class="res-info">
+                <h4>{{ formatDateTime(w.start_time) }}</h4>
+                <p class="text-muted text-sm">{{ formatDayMonth(w.start_time).weekday }} · Until {{ formatTimeOnly(w.end_time) }}</p>
+                <div class="res-status waiting">
+                  <span class="status-dot"></span> Waiting for availability
                 </div>
+              </div>
+              <div class="res-action">
+                <span class="waitlist-note text-sm">You'll be auto-promoted if a seat opens</span>
               </div>
             </div>
           </div>
@@ -63,11 +134,17 @@
 import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import api from '../api/api';
+import { useFormatters } from '../composables/useFormatters';
+import { useScrollReveal } from '../composables/useScrollReveal';
+import { useToast } from '../composables/useToast';
+
+const { formatDateTime, formatTimeOnly, formatDayMonth } = useFormatters();
+const { error: toastError, success: toastSuccess } = useToast();
+useScrollReveal();
 
 const loading = ref(true);
 const error = ref('');
 const actionLoading = ref(null);
-
 const bookings = ref([]);
 const waitlists = ref([]);
 
@@ -78,7 +155,7 @@ const fetchData = async () => {
     bookings.value = res.data.bookings.sort(sortFn);
     waitlists.value = res.data.waitlists.sort(sortFn);
   } catch (err) {
-    error.value = 'Failed to load reservations.';
+    error.value = 'Failed to load your reservations. Please try again.';
   } finally {
     loading.value = false;
   }
@@ -86,27 +163,27 @@ const fetchData = async () => {
 
 onMounted(fetchData);
 
-const formatTime = (timeString) => {
-  if (!timeString) return '';
-  const date = new Date(timeString);
-  return date.toLocaleString('en-US', { 
-    weekday: 'short', month: 'short', day: 'numeric', 
-    hour: 'numeric', minute: '2-digit' 
-  });
+const countdown = (start) => {
+  const diff = new Date(start) - Date.now();
+  if (diff <= 0) return '';
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (d > 0) return `In ${d}d ${h}h`;
+  if (h > 0) return `In ${h}h ${m}m`;
+  return `In ${m}m`;
 };
 
-const formatTimeOnly = (timeString) => {
-  return new Date(timeString).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
 
 const cancelBooking = async (bookingId) => {
-  if (!confirm("Are you sure you wish to cancel this reservation?")) return;
+  if (!confirm('Are you sure you want to cancel this reservation?')) return;
   actionLoading.value = bookingId;
   try {
     await api.post(`bookings/${bookingId}/cancel`);
     bookings.value = bookings.value.filter(b => b.booking_id !== bookingId);
+    toastSuccess('Reservation cancelled successfully.');
   } catch (err) {
-    alert(err.response?.data?.error || 'Failed to cancel reservation');
+    toastError(err.response?.data?.error || 'Failed to cancel reservation.');
   } finally {
     actionLoading.value = null;
   }
@@ -114,60 +191,199 @@ const cancelBooking = async (bookingId) => {
 </script>
 
 <style scoped>
-.page-wrapper { background-color: var(--background); min-height: 100vh; }
-.page-banner {
-  background-color: var(--secondary); background-image: radial-gradient(circle at right 20%, #2A3649 0%, var(--secondary) 100%);
-  color: #fff; padding: 5rem 0 7rem 0; border-bottom: 4px solid var(--primary);
+.py-lg { padding: 4rem 0; }
+
+/* ── Bookings Hero ── */
+.bookings-hero {
+  position: relative;
+  background: #0d1117;
+  overflow: hidden;
+  min-height: 44vh;
+  display: flex;
+  align-items: center;
+  padding-bottom: 4rem;
 }
-.serif-title { color: #fff; font-size: 2.5rem; margin-bottom: 1rem; }
-.banner-subtitle { font-size: 1.15rem; color: #CBD5E0; max-width: 600px; }
-.content-section { margin-top: -3rem; position: relative; z-index: 10; }
+.bookings-hero-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=1400&auto=format&fit=crop&q=80');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.28;
+}
+.bookings-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, rgba(8,12,22,0.95) 45%, rgba(8,12,22,0.5) 100%);
+  z-index: 1;
+}
+.bookings-hero-inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: center;
+  padding-top: 4rem;
+}
+@media (min-width: 860px) {
+  .bookings-hero-inner { grid-template-columns: 1fr 380px; }
+}
+.hero-eyebrow {
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.2em;
+  text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 1rem;
+}
+.bookings-hero-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.2rem, 4.5vw, 3.5rem);
+  font-weight: 700; color: #FDFBF7; line-height: 1.1; margin-bottom: 0.85rem;
+}
+.bookings-hero-title em { font-style: italic; color: #e0c9a6; }
+.bookings-hero-sub {
+  color: rgba(255,255,255,0.62); font-size: 1rem; line-height: 1.7; margin-bottom: 2rem; max-width: 480px;
+}
+.bookings-hero-stats { display: flex; align-items: center; gap: 1.5rem; }
+.hero-stat { text-align: center; }
+.hero-stat-num {
+  display: block; font-size: 2rem; font-weight: 700;
+  font-family: var(--font-heading); color: #e0c9a6; line-height: 1;
+}
+.hero-stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.1em; }
+.hero-stat-div { width: 1px; height: 40px; background: rgba(255,255,255,0.15); }
 
-.section-title { 
-  border-bottom: 1px solid var(--border); 
-  padding-bottom: 0.75rem; 
-  margin-bottom: 2.5rem; 
-  font-size: 1.5rem;
-  color: var(--secondary);
+.bookings-hero-photo {
+  display: none;
+}
+@media (min-width: 860px) {
+  .bookings-hero-photo {
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+  .bookings-hero-photo img {
+    width: 100%; height: 300px;
+    object-fit: cover; display: block;
+    filter: brightness(0.88) saturate(1.1);
+  }
 }
 
-.empty-layout {
-  padding: 4rem; background-color: var(--surface);
-  border: 1px dashed var(--border); border-radius: 12px; color: var(--text-muted); box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+/* Sections */
+.section { margin-bottom: 4rem; }
+.section-header {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.75rem; padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
 }
-.inline-btn { display: inline-block; padding: 0.8em 1.5em; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.05em; border-radius: 6px; }
+.section-header h3 { font-size: 1.6rem; }
 
-.list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; }
+.reservation-list { display: flex; flex-direction: column; gap: 1rem; }
 
-.ticket-card {
-  background: var(--surface); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.04);
-  border: 1px solid var(--border); border-top: 4px solid var(--success); padding: 2rem;
-  display: flex; justify-content: space-between; align-items: flex-end; transition: transform 0.3s ease;
+.reservation-item {
+  display: flex; align-items: center; gap: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 1.5rem 2rem 1.5rem 1.75rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.25s, transform 0.25s;
+  position: relative;
+  overflow: hidden;
 }
-.ticket-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+.reservation-item:hover { box-shadow: var(--shadow-md); transform: translateX(4px); }
 
-.waitlist-card { border-top-color: var(--warning); }
-
-.info h4 { font-size: 1.35rem; margin-bottom: 0.2rem; }
-.italic { font-style: italic; }
-.text-sm { font-size: 0.95rem; }
-
-.status-indicator { display: flex; align-items: center; font-weight: 500; font-size: 0.9rem; }
-.status-indicator .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem; }
-.status-indicator.success { color: var(--success); }
-.status-indicator.success .dot { background-color: var(--success); }
-.status-indicator.warning { color: var(--warning); }
-.status-indicator.warning .dot { background-color: var(--warning); box-shadow: 0 0 6px rgba(151, 90, 22, 0.4);}
-
-.cancel-link {
-  background: transparent; color: #E53E3E; border: none; padding: 0; font-size: 0.9rem;
-  font-weight: 500; text-decoration: underline; box-shadow: none; cursor: pointer; transition: opacity 0.2s;
+/* Left accent bar */
+.res-accent {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 12px 0 0 12px;
 }
-.cancel-link:hover { opacity: 0.7; transform: none; box-shadow:none; border-color:transparent; background: transparent; }
+.confirmed-accent { background: linear-gradient(180deg, #276749, #48BB78); }
+.waitlist-accent  { background: linear-gradient(180deg, #975A16, #E8A44A); }
 
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 1.5rem; }
-.mt-5 { margin-top: 3rem; }
-.mb-5 { margin-bottom: 4rem; }
-.pb-10 { padding-bottom: 6rem; }
+/* Ambient watermark */
+.res-watermark {
+  position: absolute;
+  top: 50%; right: 1.25rem;
+  transform: translateY(-50%);
+  font-size: 3.5rem;
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
+}
+
+.res-date-badge {
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--primary); color: #fff;
+  border-radius: 8px; padding: 0.5rem 0.75rem;
+  min-width: 50px; text-align: center; flex-shrink: 0;
+}
+.res-date-badge.waitlist-badge { background: var(--warning); }
+.bd { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.bm { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.85; }
+
+.res-info { flex: 1; min-width: 0; }
+.res-info h4 { font-size: 1.1rem; margin-bottom: 0.2rem; }
+
+.res-status { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.83rem; margin-top: 0.5rem; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.pulse { animation: dot-pulse 2s ease-in-out infinite; }
+.res-status.confirmed { color: var(--success); }
+.res-status.confirmed .status-dot { background: var(--success); }
+.res-status.waiting { color: var(--warning); }
+.res-status.waiting .status-dot { background: var(--warning); }
+
+@keyframes dot-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(39,103,73,0.5); }
+  50%       { box-shadow: 0 0 0 5px rgba(39,103,73,0); }
+}
+
+.res-action { margin-left: auto; flex-shrink: 0; }
+.cancel-btn { font-size: 0.85rem; padding: 0.45em 1em; }
+.waitlist-note { max-width: 180px; text-align: right; line-height: 1.4; display: block; color: var(--text-muted); font-size: 0.82rem; }
+
+/* Section header */
+/* Two-column desktop layout */
+.two-col-layout { display: grid; grid-template-columns: 1fr; gap: 0; }
+@media (min-width: 900px) {
+  .two-col-layout { grid-template-columns: 1fr 1fr; gap: 2rem; }
+}
+
+/* Countdown chip */
+.res-countdown {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.75rem; font-weight: 700;
+  background: var(--primary-light); color: var(--primary);
+  border: 1px solid rgba(139,90,43,0.2);
+  padding: 0.2em 0.65em; border-radius: 20px;
+  margin-top: 0.35rem; margin-bottom: 0.25rem;
+}
+
+.section-header-left { display: flex; align-items: center; gap: 0.6rem; }
+.section-icon { font-size: 1.1rem; }
+
+/* Empty card (inline horizontal layout) */
+.empty-card {
+  display: flex; align-items: center; gap: 1.25rem;
+  background: var(--surface);
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  color: var(--text-muted);
+}
+.empty-card-icon { font-size: 2rem; flex-shrink: 0; }
+.empty-card-title { font-weight: 600; color: var(--text-main); font-size: 0.95rem; margin-bottom: 0.25rem; }
+.empty-card-sub { font-size: 0.85rem; color: var(--text-muted); }
+.empty-card-cta {
+  margin-left: auto; flex-shrink: 0;
+  background: var(--primary); color: #fff;
+  padding: 0.55rem 1.25rem; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 600; text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.2s;
+}
+.empty-card-cta:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+.inline-error { padding: 1rem 1.5rem; border-radius: 8px; background: var(--error-light); color: var(--error); border: 1px solid rgba(197,48,48,0.2); max-width: 520px; margin: 3rem auto; text-align: center; }
 </style>

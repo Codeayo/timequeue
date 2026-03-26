@@ -1,61 +1,84 @@
 <template>
   <div class="split-layout fade-up">
-    <!-- Left: Image Showcase -->
-    <div class="image-side">
+    <!-- Left Panel -->
+    <div class="image-panel">
+      <div class="image-bg"></div>
       <div class="image-overlay">
-        <h2 class="fade-up delay-100">Your Table Awaits.</h2>
-        <p class="fade-up delay-200">Join DineQueue to effortlessly book and manage your fine dining experiences.</p>
+        <div class="image-text">
+          <p class="eyebrow">✦ Fine Dining · Effortlessly Reserved</p>
+          <h2>Your Table<br><em>Awaits.</em></h2>
+          <p class="image-sub">Join DineQueue and experience effortless restaurant reservations, every time.</p>
+
+          <div class="image-features">
+            <div class="img-feat"><span>✓</span> Instant table confirmation</div>
+            <div class="img-feat"><span>✓</span> Real-time availability</div>
+            <div class="img-feat"><span>✓</span> Zero phone calls needed</div>
+          </div>
+
+          <div class="image-quote">
+            <p class="quote-text">"The most elegant dining reservation experience I've ever used."</p>
+            <p class="quote-author">— Sofia R., Regular Guest</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Right: Auth Form -->
-    <div class="form-side">
-      <div class="auth-card">
-        <div class="auth-header text-center">
-          <h2 class="serif-heading">{{ isRegistering ? 'Join DineQueue' : 'Welcome Back' }}</h2>
-          <p class="text-muted">
-            {{ isRegistering ? 'Create an account to reserve your table.' : 'Please enter your credentials to continue.' }}
+    <!-- Right Form Panel -->
+    <div class="form-panel">
+      <div class="form-box">
+        <div class="form-header text-center">
+          <div class="form-monogram">D</div>
+          <div class="form-logo">DineQueue</div>
+          <h2>{{ isRegistering ? 'Create Account' : 'Welcome Back' }}</h2>
+          <p class="text-muted text-sm">
+            {{ isRegistering ? 'Join to book your perfect dining experience.' : 'Sign in to manage your reservations.' }}
           </p>
         </div>
 
-        <div v-if="error" class="error-banner fade-up">{{ error }}</div>
+        <div v-if="error" class="error-alert fade-up">{{ error }}</div>
 
-        <form @submit.prevent="handleSubmit" class="mt-4">
-          <div v-if="isRegistering" class="form-group fade-up delay-100">
-            <label for="name">Full Name</label>
-            <input type="text" id="name" v-model="form.name" class="input-field" placeholder="Jane Doe" required />
+        <form @submit.prevent="handleSubmit">
+          <div v-if="isRegistering" class="field fade-up delay-100">
+            <label>Full Name</label>
+            <input type="text" v-model="form.name" class="input-field" placeholder="Jane Doe" required />
           </div>
-
-          <div class="form-group fade-up" :class="isRegistering ? 'delay-200' : 'delay-100'">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" v-model="form.email" class="input-field" placeholder="jane@example.com" required />
+          <div class="field fade-up" :class="isRegistering ? 'delay-200' : 'delay-100'">
+            <label>Email Address</label>
+            <input type="email" v-model="form.email" class="input-field" placeholder="jane@example.com" required />
           </div>
-
-          <div class="form-group fade-up" :class="isRegistering ? 'delay-300' : 'delay-200'">
-            <label for="password">Password</label>
-            <input type="password" id="password" v-model="form.password" class="input-field" placeholder="••••••••" required />
+          <div class="field fade-up" :class="isRegistering ? 'delay-300' : 'delay-200'">
+            <label>Password</label>
+            <div class="password-wrap">
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                v-model="form.password"
+                class="input-field"
+                placeholder="••••••••"
+                required
+              />
+              <button type="button" class="eye-btn" @click="showPassword = !showPassword" tabindex="-1">
+                {{ showPassword ? '🙈' : '👁️' }}
+              </button>
+            </div>
           </div>
-
-          <div v-if="isRegistering" class="form-group fade-up delay-300">
-            <label for="role">Select Your Role</label>
-            <select id="role" v-model="form.role" class="input-field">
-              <option value="USER">Customer</option>
-              <option value="HOST">Restaurant Staff</option>
+          <div v-if="isRegistering" class="field fade-up delay-300">
+            <label>Account Type</label>
+            <select v-model="form.role" class="input-field">
+              <option value="USER">Customer — I want to book tables</option>
+              <option value="HOST">Restaurant Staff — I manage reservations</option>
             </select>
           </div>
 
-          <button type="submit" :disabled="loading" class="submit-btn fade-up" :class="isRegistering ? 'delay-300' : 'delay-200'">
-            {{ loading ? 'Authenticating...' : (isRegistering ? 'Register Account' : 'Sign In') }}
+          <button type="submit" :disabled="loading" class="submit-btn">
+            {{ loading ? 'Please wait...' : (isRegistering ? 'Create My Account' : 'Sign In') }}
           </button>
         </form>
 
-        <div class="toggle-section text-center fade-up delay-300">
-          <p>
-            {{ isRegistering ? 'Already a member?' : "New to DineQueue?" }}
-            <a href="#" @click.prevent="toggleMode" class="toggle-link">
-              {{ isRegistering ? 'Sign in here' : 'Create an account' }}
-            </a>
-          </p>
+        <div class="toggle text-center">
+          {{ isRegistering ? 'Already have an account?' : "Don't have an account?" }}
+          <a href="#" @click.prevent="toggleMode">
+            {{ isRegistering ? 'Sign in' : 'Register' }}
+          </a>
         </div>
       </div>
     </div>
@@ -63,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../api/api';
@@ -71,46 +94,34 @@ import api from '../api/api';
 const router = useRouter();
 const authStore = useAuthStore();
 
-const isRegistering = ref(false);
-const error = ref('');
-const loading = ref(false);
-
-const form = reactive({
-  name: '',
-  email: '',
-  password: '',
-  role: 'USER'
+// Redirect if already logged in
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    router.push(authStore.isHost ? '/host' : '/slots');
+  }
 });
 
-const toggleMode = () => {
-  isRegistering.value = !isRegistering.value;
-  error.value = '';
-};
+const isRegistering = ref(false);
+const showPassword = ref(false);
+const error = ref('');
+const loading = ref(false);
+const form = reactive({ name: '', email: '', password: '', role: 'USER' });
+
+const toggleMode = () => { isRegistering.value = !isRegistering.value; error.value = ''; };
 
 const handleSubmit = async () => {
   error.value = '';
   loading.value = true;
   try {
     const endpoint = isRegistering.value ? '/auth/register' : '/auth/login';
-    const payload = isRegistering.value 
+    const payload = isRegistering.value
       ? { name: form.name, email: form.email, password: form.password, role: form.role }
       : { email: form.email, password: form.password };
-      
     const res = await api.post(endpoint, payload);
-    const { user, token } = res.data;
-    authStore.setAuth(user, token);
-    
-    if (user.role === 'HOST') {
-      router.push('/host');
-    } else {
-      router.push('/slots');
-    }
+    authStore.setAuth(res.data.user, res.data.token);
+    router.push(res.data.user.role === 'HOST' ? '/host' : '/slots');
   } catch (err) {
-    if (err.response && err.response.data.error) {
-      error.value = err.response.data.error;
-    } else {
-      error.value = 'An unexpected error occurred. Please try again.';
-    }
+    error.value = err.response?.data?.error || 'An unexpected error occurred.';
   } finally {
     loading.value = false;
   }
@@ -120,123 +131,143 @@ const handleSubmit = async () => {
 <style scoped>
 .split-layout {
   display: flex;
-  min-height: calc(100vh - 75px); /* Subtract sticky nav height */
-  width: 100%;
+  min-height: calc(100vh - var(--nav-height));
 }
 
-.image-side {
+/* ── Left Image Panel ── */
+.image-panel {
   display: none;
+  position: relative;
+  overflow: hidden;
 }
-
-/* On larger screens, activate split layout */
 @media (min-width: 900px) {
-  .image-side {
-    display: flex;
-    flex: 1;
-    background-image: url('/hero-image.png');
-    background-size: cover;
-    background-position: center;
-    position: relative;
-    align-items: flex-end;
-  }
-
-  .image-overlay {
-    background: linear-gradient(to top, rgba(28, 35, 49, 0.95), rgba(28, 35, 49, 0.1));
-    width: 100%;
-    padding: 6rem 4rem 4rem 4rem;
-    color: #fff;
-  }
-  
-  .image-overlay h2 {
-    color: #FDFBF7;
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
-    font-family: var(--font-heading);
-  }
-  
-  .image-overlay p {
-    font-size: 1.2rem;
-    color: #E2E8F0;
-    max-width: 400px;
-  }
-
-  .form-side {
-    flex: 1;
-    max-width: 600px;
-  }
+  .image-panel { display: flex; flex: 1; }
 }
 
-.form-side {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding: 2rem;
-  background-color: var(--background);
+.image-bg {
+  position: absolute; inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=1200&auto=format&fit=crop&q=85');
+  background-size: cover;
+  background-position: center;
+  animation: ken-burns 18s ease-in-out infinite alternate;
+}
+@keyframes ken-burns {
+  0%   { transform: scale(1)    translateX(0); }
+  100% { transform: scale(1.08) translateX(-2%); }
 }
 
-.auth-card {
-  width: 100%;
-  max-width: 420px;
+.image-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    160deg,
+    rgba(6,10,18,0.6) 0%,
+    rgba(10,14,24,0.88) 55%,
+    rgba(26,18,10,0.96) 100%
+  );
+  display: flex; align-items: flex-end;
+  z-index: 1;
 }
 
-.serif-heading {
+.image-text { padding: 3.5rem; color: #fff; position: relative; z-index: 2; }
+.eyebrow {
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.2em;
+  text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 1.25rem;
+}
+.image-text h2 { font-size: clamp(2.2rem, 3vw, 3rem); color: #FDFBF7; margin-bottom: 0.75rem; font-family: var(--font-heading); line-height: 1.1; }
+.image-text h2 em { color: #e0c9a6; font-style: italic; }
+.image-sub { color: rgba(255,255,255,0.58); font-size: 1rem; max-width: 340px; line-height: 1.65; margin-bottom: 1.75rem; }
+
+.image-features { display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 2rem; }
+.img-feat {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 0.85rem; color: rgba(255,255,255,0.7);
+}
+.img-feat span { color: #48BB78; font-weight: 700; font-size: 0.9rem; }
+
+.image-quote {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 1.1rem 1.4rem;
+  max-width: 360px;
+}
+.quote-text { font-size: 0.88rem; color: rgba(255,255,255,0.8); line-height: 1.6; font-style: italic; margin-bottom: 0.5rem; }
+.quote-author { font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 600; }
+
+/* ── Right Form Panel ── */
+.form-panel {
+  display: flex; align-items: center; justify-content: center;
+  flex: 1; max-width: 100%; padding: 2.5rem 2rem;
+  background: var(--background);
+}
+@media (min-width: 900px) { .form-panel { max-width: 580px; } }
+
+.form-box { width: 100%; max-width: 420px; }
+
+.form-header { margin-bottom: 2rem; }
+
+/* Monogram */
+.form-monogram {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, var(--primary), #c9922a);
+  color: #fff;
+  border-radius: 14px;
   font-family: var(--font-heading);
-  font-size: 2.2rem;
-  color: var(--secondary);
-  margin-bottom: 0.5rem;
+  font-size: 1.5rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 0.75rem;
+  box-shadow: 0 4px 16px rgba(139,90,43,0.35);
+}
+.form-logo {
+  font-family: var(--font-heading);
+  color: var(--primary);
+  font-size: 1.15rem; font-weight: 700;
+  margin-bottom: 1.25rem; letter-spacing: -0.02em;
+}
+.form-header h2 { font-size: 1.9rem; margin-bottom: 0.4rem; color: var(--secondary); }
+
+/* Fields */
+.field { margin-bottom: 1rem; }
+label { display: block; font-weight: 500; font-size: 0.85rem; color: var(--secondary); margin-bottom: 0.4rem; letter-spacing: 0.02em; }
+
+/* Focus glow */
+.input-field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(139,90,43,0.15);
+  outline: none;
 }
 
-.auth-header {
-  margin-bottom: 2.5rem;
+/* Password show/hide */
+.password-wrap { position: relative; display: flex; align-items: center; }
+.password-wrap .input-field { width: 100%; padding-right: 2.75rem; }
+.eye-btn {
+  position: absolute; right: 0.75rem;
+  background: none; border: none; box-shadow: none;
+  font-size: 1rem; padding: 0; line-height: 1; cursor: pointer;
+  color: var(--text-muted);
+  display: flex; align-items: center;
 }
-
-.form-group {
-  margin-bottom: 1.25rem;
-}
-
-.input-field {
-  background-color: #fff;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  padding: 0.85rem 1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.01);
-}
+.eye-btn:hover { background: none; transform: none; box-shadow: none; opacity: 0.7; }
 
 .submit-btn {
-  width: 100%;
-  margin-top: 1.5rem;
-  padding: 1rem;
-  font-size: 1.05rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 6px;
+  width: 100%; margin-top: 1.25rem;
+  padding: 0.9rem; font-size: 1rem;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  border-radius: 8px;
 }
 
-.error-banner {
-  background-color: rgba(229, 62, 62, 0.1);
-  color: #E53E3E;
-  padding: 1rem;
-  border-radius: 6px;
-  border: 1px solid rgba(229, 62, 62, 0.2);
-  text-align: center;
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
-  font-weight: 500;
+.error-alert {
+  background: var(--error-light); color: var(--error);
+  padding: 0.85rem 1rem; border-radius: 8px;
+  border: 1px solid rgba(197,48,48,0.2);
+  font-size: 0.9rem; font-weight: 500;
+  text-align: center; margin-bottom: 1.5rem;
 }
 
-.toggle-section {
-  margin-top: 2.5rem;
-  font-size: 1rem;
+.toggle {
+  margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted);
+  padding-top: 1.5rem; border-top: 1px solid var(--border-soft);
 }
-
-.toggle-link {
-  font-weight: 600;
-  color: var(--primary);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-.toggle-link:hover {
-  color: var(--primary-hover);
-}
+.toggle a { font-weight: 600; margin-left: 0.35rem; }
 </style>

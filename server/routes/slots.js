@@ -30,9 +30,35 @@ router.post("/", requireAuth, requireRole("HOST"), (req, res) => {
   );
 });
 
-// Get all slots
+// Get future slots only (for customers)
 router.get("/", (req, res) => {
-  db.all(`SELECT * FROM slots`, [], (err, rows) => {
+  const query = `
+    SELECT 
+      s.*, 
+      s.capacity as total_capacity,
+      (s.capacity - (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED')) as available_capacity
+    FROM slots s
+    WHERE s.start_time >= datetime('now') 
+    ORDER BY s.start_time ASC
+  `;
+  db.all(query, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+// Get only this host's slots (secure server-side filter)
+router.get("/mine", requireAuth, requireRole("HOST"), (req, res) => {
+  const query = `
+    SELECT 
+      s.*, 
+      s.capacity as total_capacity,
+      (s.capacity - (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED')) as available_capacity
+    FROM slots s
+    WHERE s.host_id = ? 
+    ORDER BY s.start_time ASC
+  `;
+  db.all(query, [req.user.id], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });

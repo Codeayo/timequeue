@@ -1,281 +1,567 @@
 <template>
-  <div class="page-wrapper fade-up">
-    <!-- Rich Header Banner -->
-    <div class="page-banner">
-      <div class="banner-content fade-up delay-100 container">
-        <h2 class="serif-title">Curated Availability</h2>
-        <p class="banner-subtitle">Select a time that suits your evening. If our dining room is fully committed, join the waitlist.</p>
-      </div>
-    </div>
-
-    <div class="container content-section pb-10">
-      <div v-if="loading" class="loading-state text-center fade-up delay-200">
-        <div class="spinner"></div>
-        <p>Curating availability...</p>
-      </div>
-      <div v-else-if="error" class="error-banner fade-up delay-200 text-center">{{ error }}</div>
-      <div v-else-if="slots.length === 0" class="empty-state text-center fade-up delay-200">
-        <span class="icon mb-3">🍽️</span>
-        <h3>No Tables Available</h3>
-        <p>There are currently no reservations open. Please check back later.</p>
-      </div>
-      
-      <div v-else class="slots-grid fade-up delay-200">
-        <div v-for="slot in slots" :key="slot.id" class="ticket-card">
-          <div class="ticket-header">
-            <h3>{{ formatTime(slot.start_time) }}</h3>
-            <span class="duration">Until {{ formatTimeOnly(slot.end_time) }}</span>
-          </div>
-          <div class="ticket-body">
-            <div class="capacity-status" :class="slot.capacity > 0 ? 'available' : 'waitlist'">
-              <span class="dot"></span>
-              {{ slot.capacity > 0 ? `${slot.capacity} Table${slot.capacity > 1 ? 's' : ''} Remaining` : 'Waitlist Only' }}
-            </div>
-            
-            <button 
-              @click="bookSlot(slot.id)" 
-              :disabled="actionLoading === slot.id"
-              :class="{'secondary outline': slot.capacity === 0}"
-              class="action-btn"
-            >
-              <span v-if="actionLoading === slot.id">Processing...</span>
-              <span v-else>{{ slot.capacity > 0 ? 'Reserve Table' : 'Join Waitlist' }}</span>
-            </button>
-          </div>
+  <div>
+    <!-- Rich Page Hero -->
+    <div class="slots-hero">
+      <div class="slots-hero-overlay"></div>
+      <div class="slots-hero-img"></div>
+      <div class="container slots-hero-content">
+        <p class="banner-eyebrow fade-up">🍽️ Fine Dining · Reserve Your Seat</p>
+        <h1 class="slots-hero-title fade-up delay-100">Available <em>Tonight</em></h1>
+        <p class="slots-hero-sub fade-up delay-200">All times are open for reservation. Book instantly — or join the waitlist if we're full.</p>
+        <div class="slots-hero-pills fade-up delay-300">
+          <span class="hero-pill">✔ Instant confirmation</span>
+          <span class="hero-pill">📞 No phone calls needed</span>
+          <span class="hero-pill">⏰ Book in under 60 seconds</span>
         </div>
       </div>
+      <div class="slots-hero-scroll">↓</div>
+    </div>
 
-      <div v-if="message" class="toast text-center" :class="messageType">
-        {{ message }}
+    <div class="container content-section">
+      <!-- Loading -->
+      <div v-if="loading" class="text-center py-lg fade-up">
+        <div class="spinner"></div>
+        <p class="text-muted">Checking availability...</p>
+      </div>
+
+      <!-- Error -->
+      <div v-else-if="error" class="inline-error fade-up">{{ error }}</div>
+
+      <!-- Empty -->
+      <div v-else-if="slots.length === 0" class="empty-state fade-up">
+        <div class="empty-icon-wrap">
+          <span class="empty-icon-main">🍽️</span>
+          <span class="empty-ring"></span>
+        </div>
+        <h3>No Available Slots</h3>
+        <p>There are no upcoming reservation slots at this time.<br>Our host will publish new availability soon.</p>
+        <RouterLink to="/" class="empty-cta">Back to Home</RouterLink>
+      </div>
+
+      <!-- Slots Grid -->
+      <div v-else>
+        <!-- Toolbar -->
+        <div class="slots-toolbar fade-up">
+          <p class="slots-count">{{ slots.length }} slot{{ slots.length !== 1 ? 's' : '' }} available</p>
+          <div class="view-toggle">
+            <button
+              class="view-btn"
+              :class="{ active: !listView }"
+              @click="listView = false"
+              title="Grid view"
+              aria-label="Grid view"
+            >⋹</button>
+            <button
+              class="view-btn"
+              :class="{ active: listView }"
+              @click="listView = true"
+              title="List view"
+              aria-label="List view"
+            >≡</button>
+          </div>
+        </div>
+
+        <!-- Cards -->
+        <div class="fade-up delay-100 reveal" :class="listView ? 'slots-list' : 'slots-grid'">
+          <div
+            v-for="slot in slots"
+            :key="slot.id"
+            class="slot-card card"
+            :class="[slot.available_capacity === 0 ? 'slot-full' : 'slot-avail', listView ? 'slot-card-list' : '']">
+          <!-- Top accent bar -->
+          <div class="slot-accent"></div>
+
+          <!-- Date Badge + Time -->
+          <div class="slot-top">
+            <div class="date-badge">
+              <span class="badge-day">{{ formatDayMonth(slot.start_time).day }}</span>
+              <span class="badge-month">{{ formatDayMonth(slot.start_time).month }}</span>
+            </div>
+            <div class="slot-time-info">
+              <h3>{{ formatTimeOnly(slot.start_time) }} <span class="time-sep">–</span> {{ formatTimeOnly(slot.end_time) }}</h3>
+              <p class="text-muted text-sm italic">{{ formatDayMonth(slot.start_time).weekday }}, {{ formatDayMonth(slot.start_time).month }} {{ formatDayMonth(slot.start_time).day }}</p>
+            </div>
+            <span class="duration-chip">🕒 {{ slotDuration(slot) }}</span>
+          </div>
+
+          <!-- Capacity + Progress -->
+          <div class="slot-divider">
+            <div class="capacity-row" :class="slot.available_capacity > 0 ? 'avail' : 'full'">
+              <span class="cap-dot"></span>
+              <span>{{ slot.available_capacity > 0 ? `${slot.available_capacity} seat${slot.available_capacity > 1 ? 's' : ''} left` : 'Waitlist only' }}</span>
+              <span class="cap-total">of {{ slot.total_capacity }}</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div
+                class="progress-fill"
+                :class="{ 'full': slot.available_capacity === 0 }"
+                :style="{ width: ((slot.total_capacity - slot.available_capacity) / slot.total_capacity * 100) + '%' }"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Action -->
+          <div class="slot-action">
+            <button
+              v-if="!alreadyBooked(slot.id)"
+              @click="bookSlot(slot.id)"
+              :disabled="actionLoading === slot.id"
+              :class="slot.available_capacity === 0 ? 'secondary full-btn' : 'full-btn'"
+            >
+              <span v-if="actionLoading === slot.id">Processing...</span>
+              <span v-else>{{ slot.available_capacity > 0 ? 'Reserve Table' : 'Join Waitlist' }}</span>
+            </button>
+            <div v-else class="already-booked-notice">
+              <span>✓</span> Reserved for this time
+            </div>
+          </div>
+        </div>
+        </div>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <BookingConfirmationModal 
+      :show="showConfirmationModal" 
+      :booking="latestBookingDetails" 
+      @close="showConfirmationModal = false" 
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { RouterLink } from 'vue-router';
 import api from '../api/api';
+import { useFormatters } from '../composables/useFormatters';
+import { useAuthStore } from '../stores/auth';
+import BookingConfirmationModal from '../components/BookingConfirmationModal.vue';
+import { useScrollReveal } from '../composables/useScrollReveal';
+import { useToast } from '../composables/useToast';
+
+const { formatTimeOnly, formatDayMonth } = useFormatters();
+const authStore = useAuthStore();
+const { error: toastError } = useToast();
+useScrollReveal();
+
+const slotDuration = (slot) => {
+  const mins = Math.round((new Date(slot.end_time) - new Date(slot.start_time)) / 60000);
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+};
 
 const slots = ref([]);
+const listView = ref(false);
+const myBookingSlotIds = ref(new Set());
 const loading = ref(true);
 const error = ref('');
 const actionLoading = ref(null);
-const message = ref('');
-const messageType = ref('');
 
-const fetchSlots = async () => {
+// Modal state
+const showConfirmationModal = ref(false);
+const latestBookingDetails = ref({});
+
+const fetchAll = async () => {
   try {
-    const res = await api.get('slots');
-    slots.value = res.data.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    const [slotsRes, bookingsRes] = await Promise.all([
+      api.get('slots'),
+      authStore.isAuthenticated ? api.get('bookings') : Promise.resolve({ data: { bookings: [] } })
+    ]);
+    slots.value = slotsRes.data;
+    myBookingSlotIds.value = new Set(
+      bookingsRes.data.bookings.map(b => b.slot_id)
+    );
   } catch (err) {
-    error.value = 'Failed to load reservations. Please try again.';
+    error.value = 'Failed to load availability. Please try again.';
   } finally {
     loading.value = false;
   }
 };
 
-onMounted(fetchSlots);
+onMounted(fetchAll);
 
-const formatTime = (timeString) => {
-  if (!timeString) return '';
-  const date = new Date(timeString);
-  return date.toLocaleString('en-US', { 
-    weekday: 'short', month: 'short', day: 'numeric', 
-    hour: 'numeric', minute: '2-digit' 
-  });
-};
-
-const formatTimeOnly = (timeString) => {
-  if (!timeString) return '';
-  const date = new Date(timeString);
-  return date.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-const showMessage = (msg, type) => {
-  message.value = msg;
-  messageType.value = type;
-  setTimeout(() => {
-    message.value = '';
-    messageType.value = '';
-  }, 4000);
-};
+const alreadyBooked = (slotId) => myBookingSlotIds.value.has(slotId);
 
 const bookSlot = async (slotId) => {
-  error.value = '';
   actionLoading.value = slotId;
   try {
     const res = await api.post(`slots/${slotId}/book`);
     if (res.data.type === 'WAITLISTED') {
-      showMessage('You have been added to the waitlist.', 'warning');
       const slot = slots.value.find(s => s.id === slotId);
-      if (slot) slot.capacity = 0;
+      if (slot) slot.available_capacity = 0;
+      latestBookingDetails.value = { type: 'WAITLISTED', slot, partySize: 1 };
+      showConfirmationModal.value = true;
     } else {
-      showMessage('Reservation confirmed. We look forward to serving you.', 'success');
       const slot = slots.value.find(s => s.id === slotId);
-      if (slot) slot.capacity -= 1;
+      if (slot) slot.available_capacity = Math.max(0, slot.available_capacity - 1);
+      myBookingSlotIds.value.add(slotId);
+      latestBookingDetails.value = { type: 'CONFIRMED', slot, partySize: 1 };
+      showConfirmationModal.value = true;
     }
   } catch (err) {
-    const errorMsg = err.response?.data?.error || 'Failed to process request.';
-    showMessage(errorMsg, 'error');
+    toastError(err.response?.data?.error || 'Failed to process request.');
   } finally {
     actionLoading.value = null;
   }
-};
+}
 </script>
 
 <style scoped>
-.page-wrapper {
-  background-color: var(--background);
-  min-height: 100vh;
+/* ── Slots Hero ── */
+.slots-hero {
+  position: relative;
+  min-height: 48vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding-bottom: 4rem;
 }
 
-.page-banner {
-  background-color: var(--secondary);
-  background-image: radial-gradient(circle at right 20%, #2A3649 0%, var(--secondary) 100%);
-  color: #fff;
-  padding: 5rem 0 7rem 0; /* Extra bottom padding for overlap effect */
-  border-bottom: 4px solid var(--primary);
+.slots-hero-img {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&auto=format&fit=crop&q=80');
+  background-size: cover;
+  background-position: center 30%;
+  transform: scale(1.05);
+  transition: transform 8s ease;
+}
+.slots-hero:hover .slots-hero-img { transform: scale(1); }
+
+.slots-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 14, 24, 0.82) 0%,
+    rgba(26, 18, 10, 0.75) 60%,
+    rgba(139, 90, 43, 0.35) 100%
+  );
+  z-index: 1;
 }
 
-.serif-title {
-  color: #fff;
-  font-size: 2.5rem;
+.slots-hero-content {
+  position: relative;
+  z-index: 2;
+  padding-top: 4rem;
+}
+
+.slots-hero-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: #FDFBF7;
+  line-height: 1.1;
   margin-bottom: 1rem;
 }
-
-.banner-subtitle {
-  font-size: 1.15rem;
-  color: #CBD5E0;
-  max-width: 600px;
+.slots-hero-title em {
+  font-style: italic;
+  color: #e0c9a6;
 }
 
-.content-section {
-  margin-top: -3rem; /* Overlap the banner */
-  position: relative;
-  z-index: 10;
+.banner-eyebrow {
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.2em;
+  text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 1rem;
 }
 
+.slots-hero-sub {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.05rem;
+  max-width: 560px;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  font-weight: 400;
+}
+
+.slots-hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.hero-pill {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.88);
+  padding: 0.4em 1em;
+  border-radius: 100px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.slots-hero-scroll {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.4);
+  font-size: 1.1rem;
+  animation: bounce-hint 2.5s ease-in-out infinite;
+  z-index: 2;
+}
+@keyframes bounce-hint {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(6px); }
+}
+
+/* ── Toolbar ── */
+.slots-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.slots-count {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.view-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.view-btn {
+  background: transparent;
+  border: none;
+  padding: 0.45rem 0.85rem;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  box-shadow: none;
+  border-radius: 0;
+  transition: background 0.2s, color 0.2s;
+  line-height: 1;
+}
+.view-btn:hover:not(:disabled) { background: var(--surface-raised); color: var(--text-main); transform: none; box-shadow: none; }
+.view-btn.active { background: var(--primary-light); color: var(--primary); }
+
+/* ── Grid ── */
 .slots-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
 }
 
-/* Ticket Design */
-.ticket-card {
-  background: var(--surface);
+/* ── List ── */
+.slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* List-mode card overrides */
+.slot-card-list {
+  flex-direction: row;
+  align-items: stretch;
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
-.ticket-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+.slot-card-list .slot-accent {
+  width: 4px;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 0;
 }
-
-.ticket-header {
-  background: #f8fafc;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px dashed #cbd5e0;
-}
-
-.ticket-header h3 {
-  color: var(--secondary);
-  font-size: 1.5rem;
-  margin-bottom: 0.2rem;
-}
-
-.ticket-header .duration {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  font-style: italic;
-}
-
-.ticket-body {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
+.slot-avail.slot-card-list .slot-accent { background: linear-gradient(180deg, #276749, #48BB78); }
+.slot-full.slot-card-list  .slot-accent { background: linear-gradient(180deg, #975A16, #E8A44A); }
+.slot-card-list .slot-top {
   flex: 1;
-  background: #fff;
+  padding: 1rem 1.25rem;
+  border-top: none;
 }
-
-.capacity-status {
+.slot-card-list .slot-divider {
+  display: none;
+}
+.slot-card-list .slot-action {
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
-  font-weight: 500;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
+  border-top: none;
+  border-left: 1px solid var(--border-soft);
+  min-width: 170px;
+}
+.slot-card-list .full-btn {
+  padding: 0.65rem 1rem;
+  font-size: 0.82rem;
+}
+.slot-card-list .already-booked-notice {
+  font-size: 0.82rem;
+  padding: 0.5rem 0.75rem;
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 0.75rem;
+
+/* ── Card ── */
+.slot-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 14px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+.slot-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-xl); }
 
-.capacity-status.available .dot { background-color: var(--success); box-shadow: 0 0 8px rgba(39, 103, 73, 0.5); }
-.capacity-status.available { color: var(--success); }
-
-.capacity-status.waitlist .dot { background-color: var(--warning); box-shadow: 0 0 8px rgba(151, 90, 22, 0.5); }
-.capacity-status.waitlist { color: var(--warning); }
-
-.action-btn {
-  margin-top: auto;
+/* Top accent bar */
+.slot-accent {
+  height: 4px;
   width: 100%;
-  font-size: 1rem;
-  padding: 1rem;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  flex-shrink: 0;
 }
+.slot-avail .slot-accent { background: linear-gradient(90deg, #276749, #48BB78); }
+.slot-full  .slot-accent { background: linear-gradient(90deg, #975A16, #E8A44A); }
 
-.outline {
-  background-color: transparent !important;
-  color: var(--secondary) !important;
-  border: 2px solid var(--border) !important;
-  box-shadow: none !important;
-}
-.outline:hover {
-  border-color: var(--secondary) !important;
-}
-
-/* Empty State */
-.empty-state {
+/* ── Card Top ── */
+.slot-top {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem 1.75rem;
   background: var(--surface);
-  padding: 4rem;
-  border-radius: 12px;
-  border: 1px dashed var(--border);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
 }
-.empty-state .icon { font-size: 3rem; display: block; }
-.empty-state h3 { font-family: var(--font-heading); font-size: 2rem; margin-bottom: 0.5rem; }
 
-.loading-state { margin-top: 4rem; color: var(--text-muted); }
-.spinner {
-  width: 40px; height: 40px; margin: 0 auto 1rem;
-  border: 3px solid rgba(142,35,35,0.1); border-top-color: var(--primary); border-radius: 50%;
-  animation: spin 1s linear infinite;
+.date-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.5rem;
+  line-height: 1.1;
+  text-align: center;
+  flex-shrink: 0;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+.badge-day   { font-size: 1.6rem; font-weight: 700; font-family: var(--font-heading); }
+.badge-month { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
 
-.toast {
-  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-  padding: 1rem 2.5rem; border-radius: 30px; font-weight: 500; color: white;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15); animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 1000; letter-spacing: 0.02em;
+.slot-time-info { flex: 1; min-width: 0; }
+.slot-time-info h3 { font-size: 1.2rem; color: var(--secondary); margin-bottom: 0.15rem; white-space: nowrap; }
+.time-sep { color: var(--text-muted); font-style: normal; }
+
+.duration-chip {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  padding: 0.3em 0.7em;
+  border-radius: 20px;
+  white-space: nowrap;
 }
-.toast.success { background-color: var(--success); }
-.toast.warning { background-color: var(--warning); color: #fff; }
-.toast.error { background-color: #E53E3E; }
-@keyframes slideUp { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 
-.pb-10 { padding-bottom: 6rem; }
-.mt-2 { margin-top: 0.75rem; }
-.mb-3 { margin-bottom: 1.5rem; }
+/* ── Capacity / Progress ── */
+.slot-divider {
+  border-top: 1px dashed var(--border);
+  padding: 1rem 1.75rem;
+  background: var(--surface-raised);
+}
+
+.capacity-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.cap-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.cap-total {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-light);
+}
+.capacity-row.avail { color: var(--success); }
+.capacity-row.avail .cap-dot { background: var(--success); box-shadow: 0 0 6px rgba(39,103,73,0.45); animation: pulse-cap 2s infinite; }
+.capacity-row.full  { color: var(--warning); }
+.capacity-row.full  .cap-dot { background: var(--warning); }
+
+@keyframes pulse-cap {
+  0%   { box-shadow: 0 0 0 0 rgba(39,103,73,0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(39,103,73,0); }
+  100% { box-shadow: 0 0 0 0 rgba(39,103,73,0); }
+}
+
+.progress-bar-wrap {
+  height: 8px;
+  background: var(--border-soft);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #276749, #48BB78);
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.progress-fill.full {
+  background: linear-gradient(90deg, #975A16, #E8A44A);
+}
+
+/* ── Action ── */
+.slot-action { padding: 1.25rem 1.75rem 1.75rem; background: var(--surface); margin-top: auto; }
+.full-btn { width: 100%; padding: 0.85rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.already-booked-notice {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.9rem; font-weight: 600; color: var(--success);
+  padding: 0.75rem 1rem; background: var(--success-light); border-radius: 8px;
+  border: 1px solid rgba(39,103,73,0.2);
+}
+
+/* ── Empty State ── */
+.empty-state {
+  text-align: center;
+  max-width: 420px;
+  margin: 5rem auto;
+  padding: 2rem;
+}
+.empty-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px; height: 100px;
+  margin-bottom: 2rem;
+}
+.empty-icon-main { font-size: 3.5rem; position: relative; z-index: 1; }
+.empty-ring {
+  position: absolute; inset: 0;
+  border: 2px solid var(--primary-light);
+  border-radius: 50%;
+  animation: ring-pulse 3s ease-in-out infinite;
+}
+@keyframes ring-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50%       { transform: scale(1.15); opacity: 0.9; }
+}
+.empty-state h3 { font-size: 1.5rem; color: var(--secondary); margin-bottom: 0.75rem; }
+.empty-state p  { color: var(--text-muted); line-height: 1.65; margin-bottom: 1.75rem; }
+.empty-cta {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  padding: 0.75rem 1.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+}
+.empty-cta:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+/* ── Error ── */
+.inline-error {
+  padding: 1rem 1.5rem; border-radius: 8px;
+  background: var(--error-light); color: var(--error); font-weight: 500;
+  border: 1px solid rgba(197,48,48,0.2); text-align: center; max-width: 500px; margin: 3rem auto;
+}
 </style>
