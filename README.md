@@ -1,6 +1,6 @@
 # TimeQueue
 
-CSC 4370 Final Project
+Project
 
 TimeQueue is an appointment booking system with waitlist auto-fill functionality.
 
