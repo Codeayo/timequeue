@@ -24,3 +24,9 @@ Backend:
 
 Database:
 - SQLite
+
+## Additional Work
+- Remove whitespace
+- Remove pictures
+- Host dashboard
+- Name & Logo
