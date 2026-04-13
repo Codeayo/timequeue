@@ -2,7 +2,9 @@
   <div class="app-wrapper">
     <nav class="navbar" :class="{ scrolled, 'hero-nav': isHome && !scrolled }">
       <div class="nav-container">
-        <RouterLink to="/" class="logo">DineQueue</RouterLink>
+        <RouterLink to="/" class="logo">
+          <AppLogo />
+        </RouterLink>
 
         <!-- Desktop nav links -->
         <div class="nav-links desktop-nav">
@@ -55,7 +57,7 @@
     <transition name="drawer">
       <div v-if="drawerOpen" class="drawer">
         <div class="drawer-header">
-          <span class="drawer-logo">DineQueue</span>
+          <AppLogo />
           <button class="drawer-close" @click="drawerOpen = false" aria-label="Close menu">✕</button>
         </div>
 
@@ -112,7 +114,7 @@
 
     <footer class="footer">
       <div class="footer-inner">
-        <span class="footer-brand">DineQueue</span>
+        <AppLogo />
         <span class="footer-copy">&copy; 2026 · Fine Dining Reservations</span>
       </div>
     </footer>
@@ -145,6 +147,7 @@ import { RouterView, RouterLink, useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "./stores/auth";
 import { useTheme } from "./composables/useTheme";
 import { useToast } from "./composables/useToast";
+import AppLogo from "./components/AppLogo.vue";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -222,13 +225,12 @@ const handleLogout = async () => {
 }
 
 .logo {
-  font-family: var(--font-heading);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
-  letter-spacing: -0.025em;
+  display: flex;
+  align-items: center;
 }
 .logo:hover { opacity: 0.85; }
+/* Turn logo white when over the transparent hero navbar */
+.navbar.hero-nav .logo { color: #fff; }
 
 /* Desktop nav */
 .desktop-nav { display: flex; align-items: center; gap: 1rem; }
@@ -327,12 +329,7 @@ const handleLogout = async () => {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border-soft);
 }
-.drawer-logo {
-  font-family: var(--font-heading);
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--primary);
-}
+/* drawer logo uses AppLogo component — no extra styles needed */
 .drawer-close {
   background: transparent;
   border: 1px solid var(--border);
@@ -460,7 +457,7 @@ const handleLogout = async () => {
   max-width: 1200px; margin: 0 auto;
   display: flex; justify-content: space-between; align-items: center;
 }
-.footer-brand { font-family: var(--font-heading); color: var(--primary); font-weight: 700; font-size: 1rem; }
+/* footer logo uses AppLogo component — no extra styles needed */
 .footer-copy { font-size: 0.85rem; color: var(--text-light); }
 
 /* ── Global Toast Stack ─────────────────────────────────── */

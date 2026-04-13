@@ -16,6 +16,11 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ error: "role must be HOST or USER" });
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: "Invalid email domain format" });
+  }
+
   try {
     const password_hash = await bcrypt.hash(password, 10);
 

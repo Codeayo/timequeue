@@ -26,7 +26,7 @@
         <p class="hero-eyebrow fade-up delay-100">Fine Dining · Effortlessly Reserved</p>
         <h1 class="hero-headline fade-up delay-200">Your Table<br><em>Awaits.</em></h1>
         <p class="hero-sub fade-up delay-200">
-          DineQueue makes securing your next dining experience completely seamless.<br>
+          TimeQueue makes securing your next dining experience completely seamless.<br>
           Choose a time. Book instantly. Let us handle the rest.
         </p>
         <div class="hero-actions fade-up delay-300">
@@ -164,7 +164,7 @@
             <p class="story-eyebrow">Our Story</p>
             <h2>Crafted with Passion,<br><em>Served with Soul.</em></h2>
             <p class="story-body">
-              DineQueue was born from a simple belief: that a great meal begins long before the first bite.
+              TimeQueue was born from a simple belief: that a great meal begins long before the first bite.
               From the moment you choose your table to the final sip of dessert wine, every detail should feel
               effortless, warm, and deeply considered.
             </p>
@@ -240,7 +240,7 @@
     <div class="features reveal" id="features">
       <div class="container">
         <div class="features-header text-center">
-          <h2>Why DineQueue?</h2>
+          <h2>Why TimeQueue?</h2>
           <p class="text-muted">The complete reservation platform for discerning diners.</p>
         </div>
         <div class="features-grid">
@@ -271,7 +271,7 @@
           <div class="cta-left">
             <p class="cta-eyebrow">Ready to dine?</p>
             <h2>An Unforgettable<br><em>Evening Awaits.</em></h2>
-            <p class="cta-sub">Join DineQueue and start dining on your own terms.</p>
+            <p class="cta-sub">Join TimeQueue and start dining on your own terms.</p>
             <RouterLink to="/login" class="btn-primary-lg light-cta">Get Started — It's Free</RouterLink>
           </div>
 
@@ -286,7 +286,7 @@
                   <span class="nl-check">✓</span>
                   <div>
                     <p class="nl-success-title">You're on the list!</p>
-                    <p class="nl-success-sub">We'll send you the best of DineQueue.</p>
+                    <p class="nl-success-sub">We'll send you the best of TimeQueue.</p>
                   </div>
                 </div>
                 <form v-else key="form" @submit.prevent="handleNewsletter" class="newsletter-form">
@@ -509,7 +509,7 @@ const dishes = [
 // Testimonials
 const testimonials = [
   {
-    quote: 'Booking through DineQueue was the smoothest reservation experience I\'ve ever had. Our anniversary dinner was absolutely perfect — they even remembered my husband\'s dietary preferences.',
+    quote: 'Booking through TimeQueue was the smoothest reservation experience I\'ve ever had. Our anniversary dinner was absolutely perfect — they even remembered my husband\'s dietary preferences.',
     name: 'Sophia M.',
     occasion: 'Anniversary Dinner'
   },
@@ -524,7 +524,7 @@ const testimonials = [
     occasion: 'Birthday Celebration'
   },
   {
-    quote: 'The attentiveness from the moment we booked to the final course was exceptional. DineQueue sets a new standard for how restaurants should handle reservations.',
+    quote: 'The attentiveness from the moment we booked to the final course was exceptional. TimeQueue sets a new standard for how restaurants should handle reservations.',
     name: 'Marcus L.',
     occasion: 'Date Night'
   }

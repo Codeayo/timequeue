@@ -7,7 +7,7 @@
         <div class="image-text">
           <p class="eyebrow">✦ Fine Dining · Effortlessly Reserved</p>
           <h2>Your Table<br><em>Awaits.</em></h2>
-          <p class="image-sub">Join DineQueue and experience effortless restaurant reservations, every time.</p>
+          <p class="image-sub">Join TimeQueue and experience effortless restaurant reservations, every time.</p>
 
           <div class="image-features">
             <div class="img-feat"><span>✓</span> Instant table confirmation</div>
@@ -27,8 +27,7 @@
     <div class="form-panel">
       <div class="form-box">
         <div class="form-header text-center">
-          <div class="form-monogram">D</div>
-          <div class="form-logo">DineQueue</div>
+          <AppLogo class="login-logo" />
           <h2>{{ isRegistering ? 'Create Account' : 'Welcome Back' }}</h2>
           <p class="text-muted text-sm">
             {{ isRegistering ? 'Join to book your perfect dining experience.' : 'Sign in to manage your reservations.' }}
@@ -90,6 +89,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import api from '../api/api';
+import AppLogo from '../components/AppLogo.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -112,6 +112,14 @@ const toggleMode = () => { isRegistering.value = !isRegistering.value; error.val
 const handleSubmit = async () => {
   error.value = '';
   loading.value = true;
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(form.email)) {
+    error.value = 'Please enter a valid email address (e.g., user@example.com).';
+    loading.value = false;
+    return;
+  }
+
   try {
     const endpoint = isRegistering.value ? '/auth/register' : '/auth/login';
     const payload = isRegistering.value
@@ -207,23 +215,9 @@ const handleSubmit = async () => {
 
 .form-header { margin-bottom: 2rem; }
 
-/* Monogram */
-.form-monogram {
-  width: 52px; height: 52px;
-  background: linear-gradient(135deg, var(--primary), #c9922a);
-  color: #fff;
-  border-radius: 14px;
-  font-family: var(--font-heading);
-  font-size: 1.5rem; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 0.75rem;
-  box-shadow: 0 4px 16px rgba(139,90,43,0.35);
-}
-.form-logo {
-  font-family: var(--font-heading);
-  color: var(--primary);
-  font-size: 1.15rem; font-weight: 700;
-  margin-bottom: 1.25rem; letter-spacing: -0.02em;
+.login-logo {
+  margin: 0 auto 1.25rem;
+  font-size: 1.05rem;
 }
 .form-header h2 { font-size: 1.9rem; margin-bottom: 0.4rem; color: var(--secondary); }
 

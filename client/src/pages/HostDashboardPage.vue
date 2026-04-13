@@ -180,7 +180,9 @@ import api from '../api/api';
 import { useFormatters } from '../composables/useFormatters';
 import { useScrollReveal } from '../composables/useScrollReveal';
 import { useToast } from '../composables/useToast';
+import { useAuthStore } from '../stores/auth';
 
+const authStore = useAuthStore();
 const { formatDateTime, formatDayMonth } = useFormatters();
 const { success: toastSuccess, error: toastError } = useToast();
 useScrollReveal();

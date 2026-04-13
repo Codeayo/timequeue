@@ -18,7 +18,7 @@
           <div class="ticket-body">
             <div class="detail-row">
               <span class="label">Establishment</span>
-              <span class="value">DineQueue</span>
+              <span class="value">TimeQueue</span>
             </div>
             <div class="detail-row">
               <span class="label">Date</span>
