@@ -7,7 +7,7 @@
         <div class="image-text">
           <p class="eyebrow">✦ Fine Dining · Effortlessly Reserved</p>
           <h2>Your Table<br><em>Awaits.</em></h2>
-          <p class="image-sub">Join TimeQueue and experience effortless restaurant reservations, every time.</p>
+          <p class="image-sub">Join DineQueue and experience effortless restaurant reservations, every time.</p>
 
           <div class="image-features">
             <div class="img-feat"><span>✓</span> Instant table confirmation</div>

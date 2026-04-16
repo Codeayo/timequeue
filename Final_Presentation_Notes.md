@@ -1,13 +1,13 @@
-# TimeQueue: Final Project Presentation
+# DineQueue: Final Project Presentation
 **Time Limit:** 12-15 Minutes Total (7-12 min demo, 2-3 min Q&A)
 
 ## Slide 1: Title Slide
-*   **Title:** TimeQueue - Smart Appointment Booking
+*   **Title:** DineQueue - Smart Appointment Booking
 *   **Subtitle:** CSC 4370 Final Project
 *   **Visual:** Title of the project, your name(s), and course information.
 
 ## Slide 2: Project Overview (Content)
-*   **What is TimeQueue?** A comprehensive booking platform designed to simplify appointment scheduling for both hosts (service providers) and standard users.
+*   **What is DineQueue?** A comprehensive booking platform designed to simplify appointment scheduling for both hosts (service providers) and standard users.
 *   **Core Problem Solved:** Eliminates the frustration of manual scheduling and seamlessly manages high demand via an automated waitlist system.
 *   **Key Features:** 
     * Secure user registration and authentication handled by JWT.
@@ -46,7 +46,7 @@
 ## 🎤 Demo Script (7-12 Minutes)
 
 **1. Introduction (1 min)**
-*   Welcome the class. Give a 30-second elevator pitch of TimeQueue.
+*   Welcome the class. Give a 30-second elevator pitch of DineQueue.
 
 **2. The Host Perspective (2 mins)**
 *   Open the app. Log in as a 'Host' account.
@@ -74,4 +74,4 @@
 
 **6. Conclusion & Transition to Q&A (1 min)**
 *   Thank the audience.
-*   "This concludes our demo of TimeQueue. We're now open to any questions!"
+*   "This concludes our demo of DineQueue. We're now open to any questions!"

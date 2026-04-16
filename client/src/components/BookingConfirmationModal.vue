@@ -18,7 +18,7 @@
           <div class="ticket-body">
             <div class="detail-row">
               <span class="label">Establishment</span>
-              <span class="value">TimeQueue</span>
+              <span class="value">DineQueue</span>
             </div>
             <div class="detail-row">
               <span class="label">Date</span>
@@ -183,13 +183,13 @@ const close = () => {
 }
 
 .ticket-stub {
-  background: #f9f8f6;
+  background: var(--surface-raised);
   position: relative;
 }
 
 .tear-line {
   height: 20px;
-  background-image: radial-gradient(circle at 10px 10px, transparent 10px, #f9f8f6 11px);
+  background-image: radial-gradient(circle at 10px 10px, transparent 10px, var(--surface-raised) 11px);
   background-size: 20px 20px;
   background-repeat: repeat-x;
   position: absolute;

@@ -197,9 +197,9 @@ const slotDetails = ref({ bookings: [], waitlists: [] });
 const loadingDetails = ref(false);
 
 // KPI computed values
-const totalConfirmed  = computed(() => mySlots.value.reduce((s, sl) => s + (sl.bookings_count   ?? 0), 0));
-const totalWaitlisted = computed(() => mySlots.value.reduce((s, sl) => s + (sl.waitlist_count   ?? 0), 0));
-const totalCapacity   = computed(() => mySlots.value.reduce((s, sl) => s + (sl.total_capacity   ?? 0), 0));
+const totalConfirmed  = computed(() => mySlots.value.reduce((s, sl) => s + ((sl.total_capacity ?? 0) - (sl.available_capacity ?? 0)), 0));
+const totalWaitlisted = computed(() => 0); // waitlist count requires per-slot fetch; shown in roster
+const totalCapacity   = computed(() => mySlots.value.reduce((s, sl) => s + (sl.total_capacity ?? 0), 0));
 
 const fetchMySlots = async () => {
   try {
@@ -403,7 +403,7 @@ label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--secon
 .toggle-btn:hover { background: var(--secondary); color: #fff; border-color: var(--secondary); transform: none; box-shadow: none; }
 
 /* Roster */
-.roster { border-top: 1px dashed var(--border); background: #f9f8f6; }
+.roster { border-top: 1px dashed var(--border); background: var(--surface-raised); }
 .roster-inner { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
 /* Capacity mini-bar */
 .slot-mini-bar-wrap {

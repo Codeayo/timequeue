@@ -15,7 +15,7 @@ app.use("/api/slots", slotRoutes); // 👈 ADD THIS
 app.use("/api", bookingRoutes);
 
 app.get("/", (req, res) => {
-  res.json({ message: "TimeQueue API running ✅" });
+  res.json({ message: "DineQueue API running ✅" });
 });
 
 app.get("/api/health", (req, res) => {

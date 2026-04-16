@@ -1,8 +1,8 @@
-# TimeQueue
+# DineQueue
 
 Project
 
-TimeQueue is an appointment booking system with waitlist auto-fill functionality.
+DineQueue is an appointment booking system with waitlist auto-fill functionality.
 
 ## Features
 

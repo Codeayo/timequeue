@@ -25,7 +25,7 @@
 
     <!-- Wordmark -->
     <span class="logo-wordmark">
-      <span class="logo-time">Time</span><span class="logo-queue">Queue</span>
+      <span class="logo-dine">Dine</span><span class="logo-queue">Queue</span>
     </span>
   </span>
 </template>
@@ -74,7 +74,7 @@ defineProps({
   color: inherit;
 }
 
-.logo-time {
+.logo-dine {
   opacity: 1;
 }
 
