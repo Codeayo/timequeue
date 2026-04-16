@@ -1,12 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
-import HomePage from "../pages/HomePage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import SlotsPage from "../pages/SlotsPage.vue";
 import MyBookingsPage from "../pages/MyBookingsPage.vue";
 import HostDashboardPage from "../pages/HostDashboardPage.vue";
 
 const routes = [
-  { path: "/", name: "home", component: HomePage },
+  { path: "/", redirect: "/login" },
   { path: "/login", name: "login", component: LoginPage },
   { path: "/slots", name: "slots", component: SlotsPage, meta: { requiresAuth: true, requiresUser: true } },
   { path: "/bookings", name: "bookings", component: MyBookingsPage, meta: { requiresAuth: true, requiresUser: true } },
@@ -23,6 +22,10 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("token");
   const user = (() => { try { return JSON.parse(localStorage.getItem("user")); } catch { return null; } })();
 
+  // Already logged in — redirect away from login
+  if (to.name === 'login' && token) {
+    return next(user?.role === 'HOST' ? '/host' : '/slots');
+  }
   if (to.meta.requiresAuth && !token) {
     return next("/login");
   }

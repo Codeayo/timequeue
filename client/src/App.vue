@@ -1,23 +1,20 @@
 <template>
   <div class="app-wrapper">
-    <nav class="navbar" :class="{ scrolled, 'hero-nav': isHome && !scrolled }">
+    <nav class="navbar" :class="{ scrolled }">
       <div class="nav-container">
-        <RouterLink to="/" class="logo">
+        <RouterLink :to="authStore.isAuthenticated ? (authStore.isHost ? '/host' : '/bookings') : '/login'" class="logo">
           <AppLogo />
         </RouterLink>
 
         <!-- Desktop nav links -->
         <div class="nav-links desktop-nav">
-          <button @click="toggleTheme" class="theme-toggle" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'" aria-label="Toggle theme">
-            <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
-          </button>
           <template v-if="authStore.isAuthenticated">
             <template v-if="authStore.isHost">
               <RouterLink to="/host" class="nav-link">Dashboard</RouterLink>
             </template>
             <template v-else>
               <RouterLink to="/slots" class="nav-link">Reservations</RouterLink>
-              <RouterLink to="/bookings" class="nav-link">My Bookings</RouterLink>
+              <RouterLink to="/bookings" class="nav-link">My Dashboard</RouterLink>
             </template>
             <div class="user-pill">
               <span class="user-name">{{ authStore.user?.name }}</span>
@@ -29,11 +26,8 @@
           </template>
         </div>
 
-        <!-- Mobile right side: theme + hamburger -->
+        <!-- Mobile hamburger -->
         <div class="mobile-nav-controls">
-          <button @click="toggleTheme" class="theme-toggle" :title="isDark ? 'Light Mode' : 'Dark Mode'" aria-label="Toggle theme">
-            <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
-          </button>
           <button
             class="hamburger"
             :class="{ open: drawerOpen }"
@@ -82,7 +76,7 @@
                 <span class="drawer-icon">🍽️</span> Reserve a Table
               </RouterLink>
               <RouterLink to="/bookings" class="drawer-link" @click="drawerOpen = false">
-                <span class="drawer-icon">📋</span> My Bookings
+                <span class="drawer-icon">📊</span> My Dashboard
               </RouterLink>
             </template>
 
@@ -90,9 +84,6 @@
             <button @click="handleLogout" class="drawer-logout">Sign Out</button>
           </template>
           <template v-else>
-            <RouterLink to="/" class="drawer-link" @click="drawerOpen = false">
-              <span class="drawer-icon">🏠</span> Home
-            </RouterLink>
             <RouterLink to="/login" class="drawer-link" @click="drawerOpen = false">
               <span class="drawer-icon">🔐</span> Sign In
             </RouterLink>
@@ -142,22 +133,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import { RouterView, RouterLink, useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "./stores/auth";
-import { useTheme } from "./composables/useTheme";
 import { useToast } from "./composables/useToast";
 import AppLogo from "./components/AppLogo.vue";
 
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
-const { isDark, toggleTheme } = useTheme();
 const { toasts, dismiss } = useToast();
+
+// Always dark mode
+onMounted(() => document.documentElement.setAttribute('data-theme', 'dark'));
 
 const drawerOpen = ref(false);
 const scrolled = ref(false);
-const isHome = computed(() => route.name === 'home');
 
 // Close drawer on route change
 watch(() => route.path, () => { drawerOpen.value = false; });
@@ -171,8 +162,8 @@ onUnmounted(() => window.removeEventListener('scroll', handleNavScroll));
 
 const handleLogout = async () => {
   drawerOpen.value = false;
-  await router.push("/");
   authStore.logout();
+  await router.push("/login");
 };
 </script>
 

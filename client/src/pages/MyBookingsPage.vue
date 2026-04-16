@@ -1,145 +1,184 @@
 <template>
-  <div>
-    <!-- Rich Hero Banner -->
-    <div class="bookings-hero">
-      <div class="bookings-hero-overlay"></div>
-      <div class="bookings-hero-bg"></div>
-      <div class="container bookings-hero-inner">
-        <div class="bookings-hero-text">
-          <p class="hero-eyebrow fade-up">🍷 Your Dining Journey</p>
-          <h1 class="bookings-hero-title fade-up delay-100">My <em>Reservations</em></h1>
-          <p class="bookings-hero-sub fade-up delay-200">Manage your upcoming dining times and track your waitlist position.</p>
-          <div class="bookings-hero-stats fade-up delay-300">
-            <div class="hero-stat">
-              <span class="hero-stat-num">{{ bookings.length }}</span>
-              <span class="hero-stat-label">Confirmed</span>
-            </div>
-            <div class="hero-stat-div"></div>
-            <div class="hero-stat">
-              <span class="hero-stat-num">{{ waitlists.length }}</span>
-              <span class="hero-stat-label">On Waitlist</span>
-            </div>
+  <div class="dashboard-page">
+
+    <!-- Welcome Header -->
+    <div class="dash-header">
+      <div class="container dash-header-inner">
+        <div class="dash-welcome">
+          <div class="dash-avatar">{{ authStore.user?.name?.charAt(0) }}</div>
+          <div>
+            <p class="dash-greeting">Welcome back,</p>
+            <h1 class="dash-name">{{ authStore.user?.name }}</h1>
           </div>
         </div>
-        <div class="bookings-hero-photo">
-          <img
-            src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&auto=format&fit=crop&q=80"
-            alt="Fine dining table setting"
-          />
-        </div>
+        <RouterLink to="/slots" class="dash-browse-btn">
+          <span>🍽️</span> Browse Available Slots
+        </RouterLink>
       </div>
     </div>
 
-    <div class="container content-section">
-      <div v-if="loading" class="text-center py-lg fade-up">
+    <div class="container dash-body">
+
+      <!-- Loading -->
+      <div v-if="loading" class="text-center py-xl fade-up">
         <div class="spinner"></div>
-        <p class="text-muted">Loading your itinerary...</p>
+        <p class="text-muted">Loading your dashboard...</p>
       </div>
 
+      <!-- Error -->
       <div v-else-if="error" class="inline-error fade-up">{{ error }}</div>
 
-      <div v-else class="two-col-layout fade-up delay-100">
-        <!-- Confirmed Reservations -->
-        <section class="section">
-          <div class="section-header">
-            <div class="section-header-left">
-              <span class="section-icon">🍽️</span>
-              <h3>Confirmed Reservations</h3>
+      <template v-else>
+        <!-- KPI Cards -->
+        <div class="kpi-row fade-up">
+          <div class="kpi-card">
+            <div class="kpi-icon-wrap confirmed-bg">🍽️</div>
+            <div class="kpi-info">
+              <span class="kpi-num">{{ bookings.length }}</span>
+              <span class="kpi-label">Confirmed</span>
             </div>
-            <span v-if="bookings.length" class="badge success">{{ bookings.length }} Upcoming</span>
           </div>
-
-          <div v-if="bookings.length === 0" class="empty-card">
-            <span class="empty-card-icon">📅</span>
-            <div>
-              <p class="empty-card-title">No upcoming reservations</p>
-              <p class="empty-card-sub">You haven't booked a table yet.</p>
+          <div class="kpi-card">
+            <div class="kpi-icon-wrap waitlist-bg">⏳</div>
+            <div class="kpi-info">
+              <span class="kpi-num">{{ waitlists.length }}</span>
+              <span class="kpi-label">On Waitlist</span>
             </div>
-            <RouterLink to="/slots" class="empty-card-cta">Browse Tables →</RouterLink>
           </div>
+          <div class="kpi-card">
+            <div class="kpi-icon-wrap next-bg">📅</div>
+            <div class="kpi-info">
+              <span class="kpi-num next-text">{{ nextBookingLabel }}</span>
+              <span class="kpi-label">Next Reservation</span>
+            </div>
+          </div>
+        </div>
 
-          <div v-else class="reservation-list">
-            <div v-for="b in bookings" :key="b.booking_id" class="reservation-item confirmed-item">
-              <!-- Watermark -->
-              <span class="res-watermark">🍷</span>
-              <!-- Left accent -->
-              <div class="res-accent confirmed-accent"></div>
-              <!-- Date badge -->
-              <div class="res-date-badge">
-                <span class="bd">{{ formatDayMonth(b.start_time).day }}</span>
-                <span class="bm">{{ formatDayMonth(b.start_time).month }}</span>
+        <!-- Two-column layout -->
+        <div class="two-col">
+
+          <!-- ── Confirmed Reservations ── -->
+          <section class="dash-section fade-up">
+            <div class="section-title-row">
+              <div class="section-title-left">
+                <span class="section-dot confirmed-dot"></span>
+                <h2>Upcoming Reservations</h2>
               </div>
-              <div class="res-info">
-                <h4>{{ formatDateTime(b.start_time) }}</h4>
-                <p class="text-muted text-sm">{{ formatDayMonth(b.start_time).weekday }} · Dining until {{ formatTimeOnly(b.end_time) }}</p>
-                <div class="res-countdown" v-if="countdown(b.start_time)">⏱ {{ countdown(b.start_time) }}</div>
-                <div class="res-status confirmed">
-                  <span class="status-dot pulse"></span> Confirmed
+              <span v-if="bookings.length" class="pill success">{{ bookings.length }} confirmed</span>
+            </div>
+
+            <!-- Empty -->
+            <div v-if="bookings.length === 0" class="empty-card">
+              <span class="empty-icon">📅</span>
+              <div class="empty-text">
+                <p class="empty-title">No reservations yet</p>
+                <p class="empty-sub">Browse available slots and book your next dining experience.</p>
+              </div>
+              <RouterLink to="/slots" class="empty-cta">Browse Slots →</RouterLink>
+            </div>
+
+            <!-- List -->
+            <div v-else class="booking-list">
+              <div
+                v-for="b in bookings"
+                :key="b.booking_id"
+                class="booking-card confirmed-card"
+              >
+                <!-- Date badge -->
+                <div class="date-badge confirmed-badge">
+                  <span class="bd">{{ formatDayMonth(b.start_time).day }}</span>
+                  <span class="bm">{{ formatDayMonth(b.start_time).month }}</span>
+                </div>
+
+                <!-- Info -->
+                <div class="booking-info">
+                  <div class="booking-time">{{ formatTimeOnly(b.start_time) }} – {{ formatTimeOnly(b.end_time) }}</div>
+                  <div class="booking-date-str">{{ formatDayMonth(b.start_time).weekday }}, {{ formatDayMonth(b.start_time).month }} {{ formatDayMonth(b.start_time).day }}</div>
+                  <div class="booking-countdown" v-if="countdown(b.start_time)">
+                    <span class="cd-dot"></span> {{ countdown(b.start_time) }}
+                  </div>
+                </div>
+
+                <!-- Status + Action -->
+                <div class="booking-right">
+                  <span class="status-chip confirmed-chip">✓ Confirmed</span>
+                  <button
+                    class="cancel-btn"
+                    @click="cancelBooking(b.booking_id)"
+                    :disabled="actionLoading === b.booking_id"
+                  >
+                    {{ actionLoading === b.booking_id ? 'Canceling...' : 'Cancel' }}
+                  </button>
                 </div>
               </div>
-              <div class="res-action">
-                <button @click="cancelBooking(b.booking_id)" :disabled="actionLoading === b.booking_id" class="cancel-btn secondary">
-                  {{ actionLoading === b.booking_id ? 'Canceling...' : 'Cancel' }}
-                </button>
+            </div>
+          </section>
+
+          <!-- ── Waitlist ── -->
+          <section class="dash-section fade-up delay-100">
+            <div class="section-title-row">
+              <div class="section-title-left">
+                <span class="section-dot waitlist-dot"></span>
+                <h2>Waitlist</h2>
+              </div>
+              <span v-if="waitlists.length" class="pill warning">{{ waitlists.length }} waiting</span>
+            </div>
+
+            <!-- Empty -->
+            <div v-if="waitlists.length === 0" class="empty-card">
+              <span class="empty-icon">✅</span>
+              <div class="empty-text">
+                <p class="empty-title">No waitlist entries</p>
+                <p class="empty-sub">You're not queued for any full slots right now.</p>
               </div>
             </div>
-          </div>
-        </section>
 
-        <!-- Waitlist Entries -->
-        <section class="section">
-          <div class="section-header">
-            <div class="section-header-left">
-              <span class="section-icon">⏳</span>
-              <h3>Waitlist</h3>
-            </div>
-            <span v-if="waitlists.length" class="badge warning">{{ waitlists.length }} Waiting</span>
-          </div>
+            <!-- List -->
+            <div v-else class="booking-list">
+              <div
+                v-for="(w, idx) in waitlists"
+                :key="w.waitlist_id"
+                class="booking-card waitlist-card"
+              >
+                <!-- Position badge -->
+                <div class="date-badge waitlist-badge">
+                  <span class="pos-num">#{{ idx + 1 }}</span>
+                  <span class="bm">queue</span>
+                </div>
 
-          <div v-if="waitlists.length === 0" class="empty-card">
-            <span class="empty-card-icon">✅</span>
-            <div>
-              <p class="empty-card-title">No waitlist entries</p>
-              <p class="empty-card-sub">You're not waiting on any full slots.</p>
-            </div>
-          </div>
+                <!-- Info -->
+                <div class="booking-info">
+                  <div class="booking-time">{{ formatTimeOnly(w.start_time) }} – {{ formatTimeOnly(w.end_time) }}</div>
+                  <div class="booking-date-str">{{ formatDayMonth(w.start_time).weekday }}, {{ formatDayMonth(w.start_time).month }} {{ formatDayMonth(w.start_time).day }}</div>
+                  <div class="waitlist-note">Auto-promoted when a seat opens</div>
+                </div>
 
-          <div v-else class="reservation-list">
-            <div v-for="w in waitlists" :key="w.waitlist_id" class="reservation-item waitlist-item">
-              <span class="res-watermark">⏰</span>
-              <div class="res-accent waitlist-accent"></div>
-              <div class="res-date-badge waitlist-badge">
-                <span class="bd">{{ formatDayMonth(w.start_time).day }}</span>
-                <span class="bm">{{ formatDayMonth(w.start_time).month }}</span>
-              </div>
-              <div class="res-info">
-                <h4>{{ formatDateTime(w.start_time) }}</h4>
-                <p class="text-muted text-sm">{{ formatDayMonth(w.start_time).weekday }} · Until {{ formatTimeOnly(w.end_time) }}</p>
-                <div class="res-status waiting">
-                  <span class="status-dot"></span> Waiting for availability
+                <!-- Status -->
+                <div class="booking-right">
+                  <span class="status-chip waitlist-chip">⏳ Waiting</span>
                 </div>
               </div>
-              <div class="res-action">
-                <span class="waitlist-note text-sm">You'll be auto-promoted if a seat opens</span>
-              </div>
             </div>
-          </div>
-        </section>
-      </div>
+          </section>
+
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import api from '../api/api';
 import { useFormatters } from '../composables/useFormatters';
 import { useScrollReveal } from '../composables/useScrollReveal';
 import { useToast } from '../composables/useToast';
+import { useAuthStore } from '../stores/auth';
 
 const { formatDateTime, formatTimeOnly, formatDayMonth } = useFormatters();
 const { error: toastError, success: toastSuccess } = useToast();
+const authStore = useAuthStore();
 useScrollReveal();
 
 const loading = ref(true);
@@ -155,13 +194,28 @@ const fetchData = async () => {
     bookings.value = res.data.bookings.sort(sortFn);
     waitlists.value = res.data.waitlists.sort(sortFn);
   } catch (err) {
-    error.value = 'Failed to load your reservations. Please try again.';
+    error.value = 'Failed to load your dashboard. Please try again.';
   } finally {
     loading.value = false;
   }
 };
 
 onMounted(fetchData);
+
+const nextBookingLabel = computed(() => {
+  if (bookings.value.length === 0) return '—';
+  const next = bookings.value[0]; // already sorted ascending
+  const d = new Date(next.start_time);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const isTomorrow = d.toDateString() === tomorrow.toDateString();
+  const time = d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
+  if (isToday) return `Today ${time}`;
+  if (isTomorrow) return `Tomorrow`;
+  return `${formatDayMonth(next.start_time).month} ${formatDayMonth(next.start_time).day}`;
+});
 
 const countdown = (start) => {
   const diff = new Date(start) - Date.now();
@@ -174,16 +228,15 @@ const countdown = (start) => {
   return `In ${m}m`;
 };
 
-
 const cancelBooking = async (bookingId) => {
-  if (!confirm('Are you sure you want to cancel this reservation?')) return;
+  if (!confirm('Cancel this reservation?')) return;
   actionLoading.value = bookingId;
   try {
     await api.post(`bookings/${bookingId}/cancel`);
     bookings.value = bookings.value.filter(b => b.booking_id !== bookingId);
-    toastSuccess('Reservation cancelled successfully.');
+    toastSuccess('Reservation cancelled.');
   } catch (err) {
-    toastError(err.response?.data?.error || 'Failed to cancel reservation.');
+    toastError(err.response?.data?.error || 'Failed to cancel.');
   } finally {
     actionLoading.value = null;
   }
@@ -191,199 +244,359 @@ const cancelBooking = async (bookingId) => {
 </script>
 
 <style scoped>
-.py-lg { padding: 4rem 0; }
+/* ── Page layout ── */
+.dashboard-page {
+  min-height: calc(100vh - var(--nav-height));
+  background: var(--background);
+}
 
-/* ── Bookings Hero ── */
-.bookings-hero {
-  position: relative;
-  background: #0d1117;
-  overflow: hidden;
-  min-height: 44vh;
+.py-xl { padding: 4rem 0; }
+
+/* ── Welcome header ── */
+.dash-header {
+  background: var(--secondary);
+  background-image: linear-gradient(120deg, #0f1117 0%, #1c2331 100%);
+  padding: 2.5rem 0;
+  border-bottom: 3px solid var(--primary);
+}
+
+.dash-header-inner {
   display: flex;
   align-items: center;
-  padding-bottom: 4rem;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
-.bookings-hero-bg {
-  position: absolute;
-  inset: 0;
-  background-image: url('https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=1400&auto=format&fit=crop&q=80');
-  background-size: cover;
-  background-position: center;
-  opacity: 0.28;
-}
-.bookings-hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg, rgba(8,12,22,0.95) 45%, rgba(8,12,22,0.5) 100%);
-  z-index: 1;
-}
-.bookings-hero-inner {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2.5rem;
+
+.dash-welcome {
+  display: flex;
   align-items: center;
-  padding-top: 4rem;
+  gap: 1.25rem;
 }
-@media (min-width: 860px) {
-  .bookings-hero-inner { grid-template-columns: 1fr 380px; }
-}
-.hero-eyebrow {
-  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.2em;
-  text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 1rem;
-}
-.bookings-hero-title {
+
+.dash-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #c9922a);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
   font-family: var(--font-heading);
-  font-size: clamp(2.2rem, 4.5vw, 3.5rem);
-  font-weight: 700; color: #FDFBF7; line-height: 1.1; margin-bottom: 0.85rem;
-}
-.bookings-hero-title em { font-style: italic; color: #e0c9a6; }
-.bookings-hero-sub {
-  color: rgba(255,255,255,0.62); font-size: 1rem; line-height: 1.7; margin-bottom: 2rem; max-width: 480px;
-}
-.bookings-hero-stats { display: flex; align-items: center; gap: 1.5rem; }
-.hero-stat { text-align: center; }
-.hero-stat-num {
-  display: block; font-size: 2rem; font-weight: 700;
-  font-family: var(--font-heading); color: #e0c9a6; line-height: 1;
-}
-.hero-stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.1em; }
-.hero-stat-div { width: 1px; height: 40px; background: rgba(255,255,255,0.15); }
-
-.bookings-hero-photo {
-  display: none;
-}
-@media (min-width: 860px) {
-  .bookings-hero-photo {
-    display: block;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.08);
-  }
-  .bookings-hero-photo img {
-    width: 100%; height: 300px;
-    object-fit: cover; display: block;
-    filter: brightness(0.88) saturate(1.1);
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 3px solid rgba(255,255,255,0.15);
 }
 
-/* Sections */
-.section { margin-bottom: 4rem; }
-.section-header {
-  display: flex; align-items: center; gap: 1rem;
-  margin-bottom: 1.75rem; padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
+.dash-greeting {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.2rem;
 }
-.section-header h3 { font-size: 1.6rem; }
 
-.reservation-list { display: flex; flex-direction: column; gap: 1rem; }
+.dash-name {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  color: #FDFBF7;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.1;
+}
 
-.reservation-item {
-  display: flex; align-items: center; gap: 1.5rem;
+.dash-browse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dash-browse-btn:hover { background: var(--primary-hover); transform: translateY(-2px); color: #fff; }
+
+/* ── Body ── */
+.dash-body {
+  padding: 2rem 2rem 5rem;
+}
+
+/* ── KPI Row ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.kpi-card {
   background: var(--surface);
   border: 1px solid var(--border-soft);
-  border-radius: 12px;
-  padding: 1.5rem 2rem 1.5rem 1.75rem;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.25s, transform 0.25s;
-  position: relative;
-  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
 }
-.reservation-item:hover { box-shadow: var(--shadow-md); transform: translateX(4px); }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
-/* Left accent bar */
-.res-accent {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 4px;
-  border-radius: 12px 0 0 12px;
+.kpi-icon-wrap {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
 }
-.confirmed-accent { background: linear-gradient(180deg, #276749, #48BB78); }
-.waitlist-accent  { background: linear-gradient(180deg, #975A16, #E8A44A); }
+.confirmed-bg { background: rgba(39,103,73,0.12); }
+.waitlist-bg  { background: rgba(214,158,46,0.12); }
+.next-bg      { background: rgba(91,155,213,0.12); }
 
-/* Ambient watermark */
-.res-watermark {
-  position: absolute;
-  top: 50%; right: 1.25rem;
-  transform: translateY(-50%);
-  font-size: 3.5rem;
-  opacity: 0.05;
-  pointer-events: none;
-  user-select: none;
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
-
-.res-date-badge {
-  display: flex; flex-direction: column; align-items: center;
-  background: var(--primary); color: #fff;
-  border-radius: 8px; padding: 0.5rem 0.75rem;
-  min-width: 50px; text-align: center; flex-shrink: 0;
+.kpi-num {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--secondary);
+  line-height: 1;
 }
-.res-date-badge.waitlist-badge { background: var(--warning); }
-.bd { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; line-height: 1; }
-.bm { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.85; }
-
-.res-info { flex: 1; min-width: 0; }
-.res-info h4 { font-size: 1.1rem; margin-bottom: 0.2rem; }
-
-.res-status { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.83rem; margin-top: 0.5rem; }
-.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.status-dot.pulse { animation: dot-pulse 2s ease-in-out infinite; }
-.res-status.confirmed { color: var(--success); }
-.res-status.confirmed .status-dot { background: var(--success); }
-.res-status.waiting { color: var(--warning); }
-.res-status.waiting .status-dot { background: var(--warning); }
-
-@keyframes dot-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(39,103,73,0.5); }
-  50%       { box-shadow: 0 0 0 5px rgba(39,103,73,0); }
+.next-text {
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+.kpi-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.25rem;
 }
 
-.res-action { margin-left: auto; flex-shrink: 0; }
-.cancel-btn { font-size: 0.85rem; padding: 0.45em 1em; }
-.waitlist-note { max-width: 180px; text-align: right; line-height: 1.4; display: block; color: var(--text-muted); font-size: 0.82rem; }
-
-/* Section header */
-/* Two-column desktop layout */
-.two-col-layout { display: grid; grid-template-columns: 1fr; gap: 0; }
-@media (min-width: 900px) {
-  .two-col-layout { grid-template-columns: 1fr 1fr; gap: 2rem; }
+/* ── Two-column layout ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+@media (min-width: 860px) {
+  .two-col { grid-template-columns: 1fr 1fr; }
 }
 
-/* Countdown chip */
-.res-countdown {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  font-size: 0.75rem; font-weight: 700;
-  background: var(--primary-light); color: var(--primary);
-  border: 1px solid rgba(139,90,43,0.2);
-  padding: 0.2em 0.65em; border-radius: 20px;
-  margin-top: 0.35rem; margin-bottom: 0.25rem;
+/* ── Section ── */
+.dash-section { display: flex; flex-direction: column; }
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
 }
+.section-title-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.section-title-left h2 {
+  font-size: 1.15rem;
+  color: var(--secondary);
+}
+.section-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.confirmed-dot { background: var(--success); box-shadow: 0 0 0 3px rgba(39,103,73,0.18); }
+.waitlist-dot  { background: var(--warning); box-shadow: 0 0 0 3px rgba(214,158,46,0.18); }
 
-.section-header-left { display: flex; align-items: center; gap: 0.6rem; }
-.section-icon { font-size: 1.1rem; }
+/* Pills */
+.pill {
+  display: inline-block;
+  padding: 0.2em 0.7em;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pill.success { background: var(--success-light); color: var(--success); border: 1px solid rgba(39,103,73,0.2); }
+.pill.warning { background: var(--warning-light); color: var(--warning); border: 1px solid rgba(214,158,46,0.2); }
 
-/* Empty card (inline horizontal layout) */
+/* ── Empty card ── */
 .empty-card {
-  display: flex; align-items: center; gap: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   background: var(--surface);
   border: 1.5px dashed var(--border);
   border-radius: 12px;
-  padding: 1.5rem 2rem;
-  color: var(--text-muted);
+  padding: 1.5rem;
+  flex-wrap: wrap;
 }
-.empty-card-icon { font-size: 2rem; flex-shrink: 0; }
-.empty-card-title { font-weight: 600; color: var(--text-main); font-size: 0.95rem; margin-bottom: 0.25rem; }
-.empty-card-sub { font-size: 0.85rem; color: var(--text-muted); }
-.empty-card-cta {
-  margin-left: auto; flex-shrink: 0;
-  background: var(--primary); color: #fff;
-  padding: 0.55rem 1.25rem; border-radius: 8px;
-  font-size: 0.85rem; font-weight: 600; text-decoration: none;
+.empty-icon { font-size: 1.75rem; flex-shrink: 0; }
+.empty-text { flex: 1; min-width: 0; }
+.empty-title { font-weight: 600; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.2rem; }
+.empty-sub   { font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; }
+.empty-cta {
+  margin-left: auto;
+  background: var(--primary);
+  color: #fff;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
   white-space: nowrap;
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.2s;
+  flex-shrink: 0;
 }
-.empty-card-cta:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.empty-cta:hover { background: var(--primary-hover); color: #fff; }
 
-.inline-error { padding: 1rem 1.5rem; border-radius: 8px; background: var(--error-light); color: var(--error); border: 1px solid rgba(197,48,48,0.2); max-width: 520px; margin: 3rem auto; text-align: center; }
+/* ── Booking list ── */
+.booking-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.booking-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.booking-card:hover { box-shadow: var(--shadow-md); transform: translateX(3px); }
+
+/* Left accent bar */
+.booking-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 12px 0 0 12px;
+}
+.confirmed-card::before { background: var(--success); }
+.waitlist-card::before  { background: var(--warning); }
+
+/* Date / position badge */
+.date-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  min-width: 44px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.confirmed-badge { background: var(--success); color: #fff; }
+.waitlist-badge  { background: var(--warning); color: #fff; }
+
+.bd { font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; line-height: 1; }
+.bm { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
+.pos-num { font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; line-height: 1; }
+
+/* Booking info */
+.booking-info { flex: 1; min-width: 0; }
+.booking-time  { font-size: 1rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.1rem; }
+.booking-date-str { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+
+.booking-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid rgba(139,90,43,0.2);
+  padding: 0.15em 0.55em;
+  border-radius: 20px;
+  margin-top: 0.15rem;
+}
+.cd-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: cdpulse 2s ease-in-out infinite;
+}
+@keyframes cdpulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(139,90,43,0.5); }
+  50%      { box-shadow: 0 0 0 4px rgba(139,90,43,0); }
+}
+
+.waitlist-note {
+  font-size: 0.75rem;
+  color: var(--warning);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+/* Right column */
+.booking-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25em 0.75em;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.confirmed-chip { background: var(--success-light); color: var(--success); border: 1px solid rgba(39,103,73,0.2); }
+.waitlist-chip  { background: var(--warning-light);  color: var(--warning);  border: 1px solid rgba(214,158,46,0.2); }
+
+.cancel-btn {
+  font-size: 0.78rem;
+  padding: 0.3em 0.85em;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 6px;
+  box-shadow: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.cancel-btn:hover:not(:disabled) {
+  background: var(--error-light);
+  color: var(--error);
+  border-color: var(--error);
+  transform: none;
+  box-shadow: none;
+}
+.cancel-btn:disabled { opacity: 0.5; }
+
+/* Error */
+.inline-error {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  background: var(--error-light);
+  color: var(--error);
+  border: 1px solid rgba(197,48,48,0.2);
+  max-width: 520px;
+  margin: 3rem auto;
+  text-align: center;
+}
 </style>

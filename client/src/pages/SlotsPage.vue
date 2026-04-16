@@ -35,87 +35,87 @@
         </div>
         <h3>No Available Slots</h3>
         <p>There are no upcoming reservation slots at this time.<br>Our host will publish new availability soon.</p>
-        <RouterLink to="/" class="empty-cta">Back to Home</RouterLink>
+        <RouterLink to="/login" class="empty-cta">Sign In to Explore</RouterLink>
       </div>
 
-      <!-- Slots Grid -->
+      <!-- Slots grouped by date -->
       <div v-else>
         <!-- Toolbar -->
         <div class="slots-toolbar fade-up">
-          <p class="slots-count">{{ slots.length }} slot{{ slots.length !== 1 ? 's' : '' }} available</p>
-          <div class="view-toggle">
-            <button
-              class="view-btn"
-              :class="{ active: !listView }"
-              @click="listView = false"
-              title="Grid view"
-              aria-label="Grid view"
-            >⋹</button>
-            <button
-              class="view-btn"
-              :class="{ active: listView }"
-              @click="listView = true"
-              title="List view"
-              aria-label="List view"
-            >≡</button>
-          </div>
+          <p class="slots-count">{{ slots.length }} session{{ slots.length !== 1 ? 's' : '' }} available</p>
         </div>
 
-        <!-- Cards -->
-        <div class="fade-up delay-100 reveal" :class="listView ? 'slots-list' : 'slots-grid'">
-          <div
-            v-for="slot in slots"
-            :key="slot.id"
-            class="slot-card card"
-            :class="[slot.available_capacity === 0 ? 'slot-full' : 'slot-avail', listView ? 'slot-card-list' : '']">
-          <!-- Top accent bar -->
-          <div class="slot-accent"></div>
-
-          <!-- Date Badge + Time -->
-          <div class="slot-top">
-            <div class="date-badge">
-              <span class="badge-day">{{ formatDayMonth(slot.start_time).day }}</span>
-              <span class="badge-month">{{ formatDayMonth(slot.start_time).month }}</span>
+        <!-- Date Sections -->
+        <div
+          v-for="group in groupedSlots"
+          :key="group.label"
+          class="date-section fade-up"
+        >
+          <!-- Section header -->
+          <div class="date-section-header">
+            <div class="date-section-label">
+              <span class="date-section-tag">{{ group.label }}</span>
+              <span class="date-section-full">{{ group.fullDate }}</span>
             </div>
-            <div class="slot-time-info">
-              <h3>{{ formatTimeOnly(slot.start_time) }} <span class="time-sep">–</span> {{ formatTimeOnly(slot.end_time) }}</h3>
-              <p class="text-muted text-sm italic">{{ formatDayMonth(slot.start_time).weekday }}, {{ formatDayMonth(slot.start_time).month }} {{ formatDayMonth(slot.start_time).day }}</p>
-            </div>
-            <span class="duration-chip">🕒 {{ slotDuration(slot) }}</span>
+            <div class="date-section-rule"></div>
+            <span class="date-section-count">{{ group.slots.length }} session{{ group.slots.length !== 1 ? 's' : '' }}</span>
           </div>
 
-          <!-- Capacity + Progress -->
-          <div class="slot-divider">
-            <div class="capacity-row" :class="slot.available_capacity > 0 ? 'avail' : 'full'">
-              <span class="cap-dot"></span>
-              <span>{{ slot.available_capacity > 0 ? `${slot.available_capacity} seat${slot.available_capacity > 1 ? 's' : ''} left` : 'Waitlist only' }}</span>
-              <span class="cap-total">of {{ slot.total_capacity }}</span>
-            </div>
-            <div class="progress-bar-wrap">
-              <div
-                class="progress-fill"
-                :class="{ 'full': slot.available_capacity === 0 }"
-                :style="{ width: ((slot.total_capacity - slot.available_capacity) / slot.total_capacity * 100) + '%' }"
-              ></div>
-            </div>
-          </div>
-
-          <!-- Action -->
-          <div class="slot-action">
-            <button
-              v-if="!alreadyBooked(slot.id)"
-              @click="bookSlot(slot.id)"
-              :disabled="actionLoading === slot.id"
-              :class="slot.available_capacity === 0 ? 'secondary full-btn' : 'full-btn'"
+          <!-- Slot cards -->
+          <div class="slots-grid">
+            <div
+              v-for="slot in group.slots"
+              :key="slot.id"
+              class="slot-card card"
+              :class="slot.available_capacity === 0 ? 'slot-full' : 'slot-avail'"
             >
-              <span v-if="actionLoading === slot.id">Processing...</span>
-              <span v-else>{{ slot.available_capacity > 0 ? 'Reserve Table' : 'Join Waitlist' }}</span>
-            </button>
-            <div v-else class="already-booked-notice">
-              <span>✓</span> Reserved for this time
+              <!-- Top accent -->
+              <div class="slot-accent"></div>
+
+              <!-- Session type badge -->
+              <div class="session-type-row">
+                <span class="session-badge" :class="sessionClass(slot)">{{ sessionLabel(slot) }}</span>
+                <span class="duration-chip">🕒 {{ slotDuration(slot) }}</span>
+              </div>
+
+              <!-- Time display -->
+              <div class="slot-time-block">
+                <div class="time-main">{{ formatTimeOnly(slot.start_time) }} <span class="time-sep">–</span> {{ formatTimeOnly(slot.end_time) }}</div>
+              </div>
+
+              <!-- Capacity + progress -->
+              <div class="slot-divider">
+                <div class="capacity-row" :class="slot.available_capacity > 0 ? 'avail' : 'full'">
+                  <span class="cap-dot"></span>
+                  <span>{{ slot.available_capacity > 0 ? `${slot.available_capacity} seat${slot.available_capacity > 1 ? 's' : ''} available` : 'Waitlist only' }}</span>
+                  <span class="cap-total">of {{ slot.total_capacity }}</span>
+                </div>
+                <div class="progress-bar-wrap">
+                  <div
+                    class="progress-fill"
+                    :class="{ 'full': slot.available_capacity === 0 }"
+                    :style="{ width: ((slot.total_capacity - slot.available_capacity) / slot.total_capacity * 100) + '%' }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Action -->
+              <div class="slot-action">
+                <button
+                  v-if="!alreadyBooked(slot.id)"
+                  @click="bookSlot(slot.id)"
+                  :disabled="actionLoading === slot.id"
+                  :class="slot.available_capacity === 0 ? 'secondary full-btn' : 'full-btn'"
+                >
+                  <span v-if="actionLoading === slot.id">Processing...</span>
+                  <span v-else>{{ slot.available_capacity > 0 ? 'Reserve Table' : 'Join Waitlist' }}</span>
+                </button>
+                <div v-else class="already-booked-notice">
+                  <span>✓</span> Reserved
+                </div>
+              </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
     </div>
@@ -130,7 +130,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import api from '../api/api';
 import { useFormatters } from '../composables/useFormatters';
@@ -143,6 +143,27 @@ const { formatTimeOnly, formatDayMonth } = useFormatters();
 const authStore = useAuthStore();
 const { error: toastError } = useToast();
 useScrollReveal();
+
+// Session label by time of day
+const sessionLabel = (slot) => {
+  const h = new Date(slot.start_time).getHours();
+  if (h < 11) return 'Breakfast';
+  if (h < 13) return 'Brunch';
+  if (h < 16) return 'Lunch';
+  if (h < 18) return 'Early Dinner';
+  if (h < 20) return 'Dinner';
+  return 'Late Dining';
+};
+
+const sessionClass = (slot) => {
+  const l = sessionLabel(slot);
+  if (l === 'Breakfast') return 'sb-breakfast';
+  if (l === 'Brunch')    return 'sb-brunch';
+  if (l === 'Lunch')     return 'sb-lunch';
+  if (l === 'Early Dinner') return 'sb-early';
+  if (l === 'Dinner')    return 'sb-dinner';
+  return 'sb-late';
+};
 
 const slotDuration = (slot) => {
   const mins = Math.round((new Date(slot.end_time) - new Date(slot.start_time)) / 60000);
@@ -181,6 +202,32 @@ const fetchAll = async () => {
 };
 
 onMounted(fetchAll);
+
+// Group slots by calendar day
+const groupedSlots = computed(() => {
+  const map = {};
+  const now = new Date();
+  for (const slot of slots.value) {
+    const d = new Date(slot.start_time);
+    const key = d.toDateString();
+    if (!map[key]) {
+      const diff = Math.floor((d - now) / 86400000);
+      const isToday = d.toDateString() === now.toDateString();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(now.getDate() + 1);
+      const isTomorrow = d.toDateString() === tomorrow.toDateString();
+      let label = isToday ? 'Today' : isTomorrow ? 'Tomorrow'
+        : d.toLocaleString('en-US', { weekday: 'long' });
+      map[key] = {
+        label,
+        fullDate: d.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        slots: [],
+      };
+    }
+    map[key].slots.push(slot);
+  }
+  return Object.values(map);
+});
 
 const alreadyBooked = (slotId) => myBookingSlotIds.value.has(slotId);
 
@@ -563,5 +610,89 @@ const bookSlot = async (slotId) => {
   padding: 1rem 1.5rem; border-radius: 8px;
   background: var(--error-light); color: var(--error); font-weight: 500;
   border: 1px solid rgba(197,48,48,0.2); text-align: center; max-width: 500px; margin: 3rem auto;
+}
+
+/* ── Date section headers ── */
+.date-section { margin-bottom: 3rem; }
+
+.date-section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.date-section-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.date-section-tag {
+  font-size: 1.2rem;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: var(--secondary);
+}
+
+.date-section-full {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.date-section-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border-soft);
+}
+
+.date-section-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  padding: 0.2em 0.7em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Session type badge ── */
+.session-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.session-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25em 0.75em;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.sb-breakfast { background: rgba(154,230,180,0.15); color: #2F855A; border: 1px solid rgba(47,133,90,0.2); }
+.sb-brunch    { background: rgba(246,173,85,0.15);  color: #C05621; border: 1px solid rgba(192,86,33,0.2); }
+.sb-lunch     { background: rgba(99,179,237,0.15);  color: #2B6CB0; border: 1px solid rgba(43,108,176,0.2); }
+.sb-early     { background: rgba(183,148,244,0.15); color: #6B46C1; border: 1px solid rgba(107,70,193,0.2); }
+.sb-dinner    { background: rgba(252,129,74,0.15);  color: #C05621; border: 1px solid rgba(192,86,33,0.2); }
+.sb-late      { background: rgba(90,103,216,0.15);  color: #434190; border: 1px solid rgba(67,65,144,0.2); }
+
+/* ── Time block ── */
+.slot-time-block { margin-bottom: 1rem; }
+.time-main {
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--secondary);
+  letter-spacing: -0.01em;
 }
 </style>
