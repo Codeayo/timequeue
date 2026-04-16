@@ -9,9 +9,13 @@ db.serialize(() => {
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('HOST','USER')),
+      store_name TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+
+  // Migrate existing DB: add store_name if missing
+  db.run(`ALTER TABLE users ADD COLUMN store_name TEXT`, () => {});
 
   // Slots
   db.run(`

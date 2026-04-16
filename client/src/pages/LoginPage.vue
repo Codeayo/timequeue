@@ -68,6 +68,11 @@
             </select>
           </div>
 
+          <div v-if="isRegistering && form.role === 'HOST'" class="field fade-up delay-400">
+            <label>Store Name</label>
+            <input type="text" v-model="form.store_name" class="input-field" placeholder="e.g. The Golden Fork" required />
+          </div>
+
           <button type="submit" :disabled="loading" class="submit-btn">
             {{ loading ? 'Please wait...' : (isRegistering ? 'Create My Account' : 'Sign In') }}
           </button>
@@ -105,7 +110,7 @@ const isRegistering = ref(false);
 const showPassword = ref(false);
 const error = ref('');
 const loading = ref(false);
-const form = reactive({ name: '', email: '', password: '', role: 'USER' });
+const form = reactive({ name: '', email: '', password: '', role: 'USER', store_name: '' });
 
 const toggleMode = () => { isRegistering.value = !isRegistering.value; error.value = ''; };
 
@@ -123,7 +128,7 @@ const handleSubmit = async () => {
   try {
     const endpoint = isRegistering.value ? '/auth/register' : '/auth/login';
     const payload = isRegistering.value
-      ? { name: form.name, email: form.email, password: form.password, role: form.role }
+      ? { name: form.name, email: form.email, password: form.password, role: form.role, store_name: form.store_name }
       : { email: form.email, password: form.password };
     const res = await api.post(endpoint, payload);
     authStore.setAuth(res.data.user, res.data.token);
