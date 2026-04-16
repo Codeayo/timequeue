@@ -142,7 +142,6 @@ const handleSubmit = async () => {
   min-height: calc(100vh - var(--nav-height));
 }
 
-/* ── Left Image Panel ── */
 .image-panel {
   display: none;
   position: relative;
@@ -211,7 +210,7 @@ const handleSubmit = async () => {
 }
 @media (min-width: 900px) { .form-panel { max-width: 580px; } }
 
-.form-box { width: 100%; max-width: 420px; }
+.form-box { width: 420px; max-width: 100%; }
 
 .form-header { margin-bottom: 2rem; }
 

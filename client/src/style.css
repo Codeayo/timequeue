@@ -68,6 +68,8 @@
 /* Reset */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html { scrollbar-gutter: stable; }
+
 body {
   min-height: 100vh;
   background-color: var(--background);

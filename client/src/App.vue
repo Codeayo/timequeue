@@ -173,7 +173,7 @@ const handleLogout = async () => {
 /* ── Navbar ───────────────────────────────────────────────── */
 .navbar {
   height: var(--nav-height);
-  background: var(--surface);
+  background: #6b7280;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-soft);
@@ -218,6 +218,7 @@ const handleLogout = async () => {
 .logo {
   display: flex;
   align-items: center;
+  color: #000;
 }
 .logo:hover { opacity: 0.85; }
 /* Turn logo white when over the transparent hero navbar */
