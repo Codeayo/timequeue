@@ -1,89 +1,63 @@
 <template>
-  <div class="split-layout fade-up">
-    <!-- Left Panel -->
-    <div class="image-panel">
-      <div class="image-bg"></div>
-      <div class="image-overlay">
-        <div class="image-text">
-          <p class="eyebrow">✦ Fine Dining · Effortlessly Reserved</p>
-          <h2>Your Table<br><em>Awaits.</em></h2>
-          <p class="image-sub">Join DineQueue and experience effortless restaurant reservations, every time.</p>
-
-          <div class="image-features">
-            <div class="img-feat"><span>✓</span> Instant table confirmation</div>
-            <div class="img-feat"><span>✓</span> Real-time availability</div>
-            <div class="img-feat"><span>✓</span> Zero phone calls needed</div>
-          </div>
-
-          <div class="image-quote">
-            <p class="quote-text">"The most elegant dining reservation experience I've ever used."</p>
-            <p class="quote-author">— Sofia R., Regular Guest</p>
-          </div>
-        </div>
+  <div class="login-page fade-up">
+    <div class="form-card">
+      <!-- Logo + heading -->
+      <div class="form-header text-center">
+        <AppLogo class="login-logo" />
+        <h2>{{ isRegistering ? 'Create Account' : 'Welcome Back' }}</h2>
+        <p class="form-subtitle">
+          {{ isRegistering ? 'Join to book your perfect dining experience.' : 'Sign in to manage your reservations.' }}
+        </p>
       </div>
-    </div>
 
-    <!-- Right Form Panel -->
-    <div class="form-panel">
-      <div class="form-box">
-        <div class="form-header text-center">
-          <AppLogo class="login-logo" />
-          <h2>{{ isRegistering ? 'Create Account' : 'Welcome Back' }}</h2>
-          <p class="text-muted text-sm">
-            {{ isRegistering ? 'Join to book your perfect dining experience.' : 'Sign in to manage your reservations.' }}
-          </p>
+      <div v-if="error" class="error-alert fade-up">{{ error }}</div>
+
+      <form @submit.prevent="handleSubmit">
+        <div v-if="isRegistering" class="field fade-up delay-100">
+          <label>Full Name</label>
+          <input type="text" v-model="form.name" class="input-field" placeholder="Jane Doe" required />
+        </div>
+        <div class="field fade-up" :class="isRegistering ? 'delay-200' : 'delay-100'">
+          <label>Email Address</label>
+          <input type="email" v-model="form.email" class="input-field" placeholder="jane@example.com" required />
+        </div>
+        <div class="field fade-up" :class="isRegistering ? 'delay-300' : 'delay-200'">
+          <label>Password</label>
+          <div class="password-wrap">
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              v-model="form.password"
+              class="input-field"
+              placeholder="••••••••"
+              required
+            />
+            <button type="button" class="eye-btn" @click="showPassword = !showPassword" tabindex="-1">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+        </div>
+        <div v-if="isRegistering" class="field fade-up delay-300">
+          <label>Account Type</label>
+          <select v-model="form.role" class="input-field">
+            <option value="USER">Customer — I want to book tables</option>
+            <option value="HOST">Restaurant Staff — I manage reservations</option>
+          </select>
+        </div>
+        <div v-if="isRegistering && form.role === 'HOST'" class="field fade-up delay-400">
+          <label>Store Name</label>
+          <input type="text" v-model="form.store_name" class="input-field" placeholder="e.g. The Golden Fork" required />
         </div>
 
-        <div v-if="error" class="error-alert fade-up">{{ error }}</div>
+        <button type="submit" :disabled="loading" class="submit-btn">
+          {{ loading ? 'Please wait...' : (isRegistering ? 'Create My Account' : 'Sign In') }}
+        </button>
+      </form>
 
-        <form @submit.prevent="handleSubmit">
-          <div v-if="isRegistering" class="field fade-up delay-100">
-            <label>Full Name</label>
-            <input type="text" v-model="form.name" class="input-field" placeholder="Jane Doe" required />
-          </div>
-          <div class="field fade-up" :class="isRegistering ? 'delay-200' : 'delay-100'">
-            <label>Email Address</label>
-            <input type="email" v-model="form.email" class="input-field" placeholder="jane@example.com" required />
-          </div>
-          <div class="field fade-up" :class="isRegistering ? 'delay-300' : 'delay-200'">
-            <label>Password</label>
-            <div class="password-wrap">
-              <input
-                :type="showPassword ? 'text' : 'password'"
-                v-model="form.password"
-                class="input-field"
-                placeholder="••••••••"
-                required
-              />
-              <button type="button" class="eye-btn" @click="showPassword = !showPassword" tabindex="-1">
-                {{ showPassword ? '🙈' : '👁️' }}
-              </button>
-            </div>
-          </div>
-          <div v-if="isRegistering" class="field fade-up delay-300">
-            <label>Account Type</label>
-            <select v-model="form.role" class="input-field">
-              <option value="USER">Customer — I want to book tables</option>
-              <option value="HOST">Restaurant Staff — I manage reservations</option>
-            </select>
-          </div>
-
-          <div v-if="isRegistering && form.role === 'HOST'" class="field fade-up delay-400">
-            <label>Store Name</label>
-            <input type="text" v-model="form.store_name" class="input-field" placeholder="e.g. The Golden Fork" required />
-          </div>
-
-          <button type="submit" :disabled="loading" class="submit-btn">
-            {{ loading ? 'Please wait...' : (isRegistering ? 'Create My Account' : 'Sign In') }}
-          </button>
-        </form>
-
-        <div class="toggle text-center">
-          {{ isRegistering ? 'Already have an account?' : "Don't have an account?" }}
-          <a href="#" @click.prevent="toggleMode">
-            {{ isRegistering ? 'Sign in' : 'Register' }}
-          </a>
-        </div>
+      <div class="toggle text-center">
+        {{ isRegistering ? 'Already have an account?' : "Don't have an account?" }}
+        <a href="#" @click.prevent="toggleMode">
+          {{ isRegistering ? 'Sign in' : 'Register' }}
+        </a>
       </div>
     </div>
   </div>
@@ -142,9 +116,24 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-.split-layout {
+/* ── Centered page ── */
+.login-page {
   display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: calc(100vh - var(--nav-height));
+  padding: 2rem 1rem;
+  background: var(--background);
+}
+
+.form-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  padding: 2.75rem 2.5rem 2.25rem;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.08);
 }
 
 .image-panel {
@@ -220,14 +209,22 @@ const handleSubmit = async () => {
 .form-header { margin-bottom: 2rem; }
 
 .login-logo {
-  margin: 0 auto 1.25rem;
+  margin: 0 auto 1rem;
   font-size: 1.05rem;
 }
-.form-header h2 { font-size: 1.9rem; margin-bottom: 0.4rem; color: var(--secondary); }
+.form-header h2 { font-size: 1.85rem; margin-bottom: 0.35rem; color: var(--secondary); }
+.form-subtitle { font-size: 0.88rem; color: var(--text-muted); }
 
 /* Fields */
 .field { margin-bottom: 1rem; }
-label { display: block; font-weight: 500; font-size: 0.85rem; color: var(--secondary); margin-bottom: 0.4rem; letter-spacing: 0.02em; }
+label { display: block; font-weight: 500; font-size: 0.82rem; color: var(--secondary); margin-bottom: 0.4rem; letter-spacing: 0.02em; }
+
+/* Pill-shaped inputs */
+.input-field {
+  border-radius: 999px !important;
+  padding-left: 1.1rem !important;
+  padding-right: 1.1rem !important;
+}
 
 /* Focus glow */
 .input-field:focus {
@@ -238,9 +235,9 @@ label { display: block; font-weight: 500; font-size: 0.85rem; color: var(--secon
 
 /* Password show/hide */
 .password-wrap { position: relative; display: flex; align-items: center; }
-.password-wrap .input-field { width: 100%; padding-right: 2.75rem; }
+.password-wrap .input-field { width: 100%; padding-right: 2.75rem !important; }
 .eye-btn {
-  position: absolute; right: 0.75rem;
+  position: absolute; right: 1rem;
   background: none; border: none; box-shadow: none;
   font-size: 1rem; padding: 0; line-height: 1; cursor: pointer;
   color: var(--text-muted);
@@ -248,23 +245,24 @@ label { display: block; font-weight: 500; font-size: 0.85rem; color: var(--secon
 }
 .eye-btn:hover { background: none; transform: none; box-shadow: none; opacity: 0.7; }
 
+/* Pill submit button */
 .submit-btn {
   width: 100%; margin-top: 1.25rem;
   padding: 0.9rem; font-size: 1rem;
   text-transform: uppercase; letter-spacing: 0.06em;
-  border-radius: 8px;
+  border-radius: 999px;
 }
 
 .error-alert {
   background: var(--error-light); color: var(--error);
-  padding: 0.85rem 1rem; border-radius: 8px;
+  padding: 0.85rem 1.1rem; border-radius: 12px;
   border: 1px solid rgba(197,48,48,0.2);
   font-size: 0.9rem; font-weight: 500;
   text-align: center; margin-bottom: 1.5rem;
 }
 
 .toggle {
-  margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted);
+  margin-top: 1.75rem; font-size: 0.9rem; color: var(--text-muted);
   padding-top: 1.5rem; border-top: 1px solid var(--border-soft);
 }
 .toggle a { font-weight: 600; margin-left: 0.35rem; }
