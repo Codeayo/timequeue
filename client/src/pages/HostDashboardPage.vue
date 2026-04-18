@@ -1,20 +1,30 @@
 <template>
   <div>
-    <!-- Rich Host Hero Banner -->
-    <div class="host-hero">
-      <div class="host-hero-bg"></div>
-      <div class="host-hero-overlay"></div>
-      <div class="container host-hero-content">
-        <div class="host-hero-text">
-          <p class="host-eyebrow fade-up">🔑 Staff Portal · Host Mode</p>
-          <h1 class="host-hero-title fade-up delay-100">Host <em>Dashboard</em></h1>
-          <p class="host-hero-sub fade-up delay-200">Manage your restaurant's availability and monitor your full guest roster in real time.</p>
+    <!-- Professional Dashboard Header -->
+    <div class="host-header">
+      <div class="host-header-bg"></div>
+      <div class="host-header-overlay"></div>
+      <div class="container host-header-inner">
+        <div class="host-header-left">
+          <div class="host-breadcrumb">
+            <span class="breadcrumb-tag">Staff Portal</span>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Dashboard</span>
+          </div>
+          <h1 class="host-header-title">Host Dashboard</h1>
+          <p class="host-header-sub">Manage availability &amp; monitor your full guest roster in real time.</p>
         </div>
-        <div class="host-name-badge fade-up delay-300">
-          <span class="host-avatar">{{ authStore.user?.name?.charAt(0) }}</span>
-          <div>
-            <p class="host-label">Signed in as</p>
-            <p class="host-name">{{ authStore.user?.name }}</p>
+        <div class="host-header-right">
+          <div class="host-name-badge">
+            <span class="host-avatar">{{ authStore.user?.name?.charAt(0) }}</span>
+            <div>
+              <p class="host-label">Signed in as</p>
+              <p class="host-name">{{ authStore.user?.name }}</p>
+            </div>
+          </div>
+          <div class="host-date-badge">
+            <span class="date-icon">📅</span>
+            <span>{{ todayLabel }}</span>
           </div>
         </div>
       </div>
@@ -116,9 +126,12 @@
                     <div class="slot-mini-bar" :style="{ width: ((slot.total_capacity - slot.available_capacity) / slot.total_capacity * 100) + '%' }" :class="slot.available_capacity === 0 ? 'full' : ''"></div>
                   </div>
                 </div>
-                <button class="toggle-btn">
-                  <span>{{ expandedSlot === slot.id ? '▲ Hide' : '▼ Roster' }}</span>
-                </button>
+                <div class="slot-actions-group">
+                  <button class="delete-btn" @click.stop="deleteSlot(slot.id)" title="Delete Slot">✕</button>
+                  <button class="toggle-btn" @click="toggleSlotDetails(slot.id)">
+                    <span>{{ expandedSlot === slot.id ? '▲ Hide' : '▼ Roster' }}</span>
+                  </button>
+                </div>
               </div>
 
               <!-- Roster -->
@@ -135,12 +148,15 @@
                     </div>
                     <p v-if="!slotDetails.bookings?.length" class="roster-empty text-muted italic text-sm">No confirmed reservations yet</p>
                     <table v-else class="roster-table">
-                      <thead><tr><th>Guest</th><th>Email</th><th>Status</th></tr></thead>
+                      <thead><tr><th>Guest</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
                       <tbody>
                         <tr v-for="b in slotDetails.bookings" :key="b.id">
                           <td><span class="guest-avatar">{{ b.name?.charAt(0) }}</span> {{ b.name }}</td>
                           <td class="text-muted">{{ b.email }}</td>
                           <td><span class="badge success">Confirmed</span></td>
+                          <td>
+                            <button class="remove-btn" @click="cancelBooking(slot.id, b.id)">Drop</button>
+                          </td>
                         </tr>
                       </tbody>
                     </table>
@@ -153,13 +169,16 @@
                     </div>
                     <p v-if="!slotDetails.waitlists?.length" class="roster-empty text-muted italic text-sm">No one on the waitlist</p>
                     <table v-else class="roster-table">
-                      <thead><tr><th>#</th><th>Guest</th><th>Email</th><th>Status</th></tr></thead>
+                      <thead><tr><th>#</th><th>Guest</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
                       <tbody>
                         <tr v-for="(w, idx) in slotDetails.waitlists" :key="w.id">
                           <td class="pos-num">#{{ idx + 1 }}</td>
                           <td><span class="guest-avatar wait">{{ w.name?.charAt(0) }}</span> {{ w.name }}</td>
                           <td class="text-muted">{{ w.email }}</td>
                           <td><span class="badge warning">Waiting</span></td>
+                          <td>
+                            <button class="remove-btn" @click="cancelWaitlist(slot.id, w.id)">Drop</button>
+                          </td>
                         </tr>
                       </tbody>
                     </table>
@@ -200,6 +219,7 @@ const loadingDetails = ref(false);
 const totalConfirmed  = computed(() => mySlots.value.reduce((s, sl) => s + ((sl.total_capacity ?? 0) - (sl.available_capacity ?? 0)), 0));
 const totalWaitlisted = computed(() => 0); // waitlist count requires per-slot fetch; shown in roster
 const totalCapacity   = computed(() => mySlots.value.reduce((s, sl) => s + (sl.total_capacity ?? 0), 0));
+const todayLabel = computed(() => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }));
 
 const fetchMySlots = async () => {
   try {
@@ -249,6 +269,44 @@ const toggleSlotDetails = async (slotId) => {
     loadingDetails.value = false;
   }
 };
+
+const deleteSlot = async (slotId) => {
+  if (!confirm('Are you sure you want to delete this slot? All registered bookings and waitlists will be cancelled.')) return;
+  try {
+    await api.delete(`slots/${slotId}`);
+    toastSuccess('Slot deleted successfully.');
+    if (expandedSlot.value === slotId) expandedSlot.value = null;
+    await fetchMySlots();
+  } catch (err) {
+    toastError(err.response?.data?.error || 'Failed to delete slot.');
+  }
+};
+
+const cancelBooking = async (slotId, bookingId) => {
+  if (!confirm('Cancel this confirmed guest?')) return;
+  try {
+    await api.post(`bookings/${bookingId}/cancel`);
+    toastSuccess('Booking cancelled.');
+    await toggleSlotDetails(slotId); // close
+    await toggleSlotDetails(slotId); // reopen to refresh roster
+    await fetchMySlots();
+  } catch (err) {
+    toastError(err.response?.data?.error || 'Failed to drop booking.');
+  }
+};
+
+const cancelWaitlist = async (slotId, waitlistId) => {
+  if (!confirm('Remove this person from the waitlist?')) return;
+  try {
+    await api.post(`waitlist/${waitlistId}/cancel`);
+    toastSuccess('Removed from waitlist.');
+    await toggleSlotDetails(slotId); // close
+    await toggleSlotDetails(slotId); // reopen to refresh roster
+    await fetchMySlots();
+  } catch (err) {
+    toastError(err.response?.data?.error || 'Failed to drop waitlist.');
+  }
+};
 </script>
 
 <style scoped>
@@ -257,65 +315,93 @@ const toggleSlotDetails = async (slotId) => {
 .mt-lg { margin-top: 2rem; }
 .ml-auto { margin-left: auto; }
 
-/* ── Host Hero ── */
-.host-hero {
+/* ── Professional Dashboard Header ── */
+.host-header {
   position: relative;
   overflow: hidden;
-  min-height: 40vh;
+  padding: 3rem 0 2.5rem;
+  min-height: 200px;
   display: flex;
   align-items: center;
-  padding-bottom: 4rem;
 }
-.host-hero-bg {
+.host-header-bg {
   position: absolute; inset: 0;
   background-image: url('https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1400&auto=format&fit=crop&q=80');
   background-size: cover;
-  background-position: center 40%;
-  opacity: 0.3;
+  background-position: center 30%;
 }
-.host-hero-overlay {
+.host-header-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(120deg, rgba(8,12,22,0.96) 40%, rgba(20,10,5,0.82) 100%);
+  background: linear-gradient(100deg, rgba(6,10,18,0.88) 0%, rgba(20,12,4,0.80) 60%, rgba(6,10,18,0.70) 100%);
   z-index: 1;
 }
-.host-hero-content {
-  position: relative; z-index: 2;
+.host-header-inner {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 2rem;
   flex-wrap: wrap;
-  padding-top: 4rem;
+  width: 100%;
 }
-.host-eyebrow {
-  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.2em;
-  text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 1rem;
+.host-breadcrumb {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 0.7rem;
 }
-.host-hero-title {
-  font-family: var(--font-heading); font-size: clamp(2rem, 4.5vw, 3.5rem);
-  font-weight: 700; color: #FDFBF7; line-height: 1.1; margin-bottom: 0.75rem;
+.breadcrumb-tag {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.14em; color: #fff;
+  background: var(--primary);
+  padding: 0.22em 0.85em; border-radius: 20px;
 }
-.host-hero-title em { font-style: italic; color: #e0c9a6; }
-.host-hero-sub { color: rgba(255,255,255,0.6); font-size: 1rem; max-width: 500px; line-height: 1.65; }
+.breadcrumb-sep { color: rgba(255,255,255,0.35); font-size: 0.78rem; }
+.breadcrumb-current { font-size: 0.8rem; color: rgba(255,255,255,0.55); font-weight: 500; }
 
+.host-header-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  font-weight: 700;
+  color: #FDFBF7;
+  line-height: 1.15;
+  margin-bottom: 0.4rem;
+}
+.host-header-sub {
+  font-size: 0.9rem; color: rgba(255,255,255,0.58); max-width: 440px; line-height: 1.55;
+}
+.host-header-right {
+  display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;
+}
 .host-name-badge {
-  display: flex; align-items: center; gap: 0.85rem;
-  background: rgba(255,255,255,0.07);
+  display: flex; align-items: center; gap: 0.7rem;
+  background: rgba(255,255,255,0.09);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 14px;
-  padding: 0.85rem 1.25rem;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
   flex-shrink: 0;
 }
 .host-avatar {
-  width: 40px; height: 40px; border-radius: 50%;
+  width: 36px; height: 36px; border-radius: 50%;
   background: linear-gradient(135deg, var(--primary), #c9922a);
-  color: #fff; font-size: 1.1rem; font-weight: 700;
+  color: #fff; font-size: 1rem; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-heading);
 }
-.host-label { font-size: 0.68rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.15rem; }
-.host-name  { font-size: 0.9rem; color: rgba(255,255,255,0.88); font-weight: 600; }
+.host-label { font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.1rem; }
+.host-name  { font-size: 0.88rem; color: rgba(255,255,255,0.9); font-weight: 600; }
+
+.host-date-badge {
+  display: flex; align-items: center; gap: 0.45rem;
+  font-size: 0.82rem; font-weight: 500; color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.09);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  white-space: nowrap;
+}
+.date-icon { font-size: 0.88rem; }
 
 /* ── KPI Cards ── */
 .kpi-row {
@@ -395,12 +481,18 @@ label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--secon
 .bm { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; }
 
 .slot-info h4 { font-size: 1.05rem; margin-bottom: 0.1rem; }
+.slot-actions-group { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
 .toggle-btn {
-  margin-left: auto; background: transparent; color: var(--text-muted);
+  background: transparent; color: var(--text-muted);
   border: 1px solid var(--border); font-size: 0.8rem; padding: 0.35em 0.85em;
   border-radius: 4px; box-shadow: none;
 }
 .toggle-btn:hover { background: var(--secondary); color: #fff; border-color: var(--secondary); transform: none; box-shadow: none; }
+.delete-btn {
+  background: transparent; border: 1px solid transparent; color: var(--text-muted);
+  font-size: 1rem; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+}
+.delete-btn:hover { background: var(--error-light); color: var(--error); border-color: rgba(197,48,48,0.2); }
 
 /* Roster */
 .roster { border-top: 1px dashed var(--border); background: var(--surface-raised); }
@@ -453,4 +545,11 @@ label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--secon
   border-radius: 50%; animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.remove-btn {
+  background: transparent; border: 1px solid var(--error); color: var(--error); font-size: 0.75rem;
+  padding: 0.2rem 0.6rem; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+  text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;
+}
+.remove-btn:hover { background: var(--error); color: #fff; }
 </style>

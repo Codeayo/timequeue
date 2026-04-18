@@ -64,6 +64,55 @@ router.get("/mine", requireAuth, requireRole("HOST"), (req, res) => {
   });
 });
 
+// Get a specific slot by ID
+router.get("/:id", (req, res) => {
+  const query = `
+    SELECT 
+      s.*, 
+      s.capacity as total_capacity,
+      (s.capacity - (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED')) as available_capacity
+    FROM slots s
+    WHERE s.id = ?
+  `;
+  db.get(query, [req.params.id], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(404).json({ error: "Slot not found" });
+    res.json(row);
+  });
+});
+
+// Delete slot (HOST only)
+router.delete("/:id", requireAuth, requireRole("HOST"), (req, res) => {
+  const slotId = req.params.id;
+
+  db.get(`SELECT * FROM slots WHERE id = ? AND host_id = ?`, [slotId, req.user.id], (err, slot) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!slot) return res.status(403).json({ error: "Not authorized or slot not found" });
+
+    db.serialize(() => {
+      db.run("BEGIN TRANSACTION");
+      
+      // Delete associated waitlist entries
+      db.run(`DELETE FROM waitlist WHERE slot_id = ?`, [slotId], (errWait) => {
+        if (errWait) { db.run("ROLLBACK"); return res.status(500).json({ error: errWait.message }); }
+        
+        // Delete associated bookings
+        db.run(`DELETE FROM bookings WHERE slot_id = ?`, [slotId], (errBook) => {
+          if (errBook) { db.run("ROLLBACK"); return res.status(500).json({ error: errBook.message }); }
+          
+          // Delete the slot itself
+          db.run(`DELETE FROM slots WHERE id = ?`, [slotId], (errSlot) => {
+            if (errSlot) { db.run("ROLLBACK"); return res.status(500).json({ error: errSlot.message }); }
+            
+            db.run("COMMIT");
+            res.json({ success: true, message: "Slot deleted successfully." });
+          });
+        });
+      });
+    });
+  });
+});
+
 // Get bookings and waitlist for a specific slot (HOST only)
 router.get("/:slotId/bookings", requireAuth, requireRole("HOST"), (req, res) => {
   const slotId = req.params.slotId;

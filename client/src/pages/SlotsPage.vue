@@ -103,12 +103,10 @@
               <div class="slot-action">
                 <button
                   v-if="!alreadyBooked(slot.id)"
-                  @click="bookSlot(slot.id)"
-                  :disabled="actionLoading === slot.id"
+                  @click="$router.push('/book/' + slot.id)"
                   :class="slot.available_capacity === 0 ? 'secondary full-btn' : 'full-btn'"
                 >
-                  <span v-if="actionLoading === slot.id">Processing...</span>
-                  <span v-else>{{ slot.available_capacity > 0 ? 'Reserve Table' : 'Join Waitlist' }}</span>
+                  <span>{{ slot.available_capacity > 0 ? 'Select Time' : 'Join Waitlist' }}</span>
                 </button>
                 <div v-else class="already-booked-notice">
                   <span>✓</span> Reserved
@@ -120,12 +118,6 @@
       </div>
     </div>
 
-    <!-- Confirmation Modal -->
-    <BookingConfirmationModal 
-      :show="showConfirmationModal" 
-      :booking="latestBookingDetails" 
-      @close="showConfirmationModal = false" 
-    />
   </div>
 </template>
 
@@ -135,7 +127,6 @@ import { RouterLink } from 'vue-router';
 import api from '../api/api';
 import { useFormatters } from '../composables/useFormatters';
 import { useAuthStore } from '../stores/auth';
-import BookingConfirmationModal from '../components/BookingConfirmationModal.vue';
 import { useScrollReveal } from '../composables/useScrollReveal';
 import { useToast } from '../composables/useToast';
 
@@ -178,11 +169,6 @@ const listView = ref(false);
 const myBookingSlotIds = ref(new Set());
 const loading = ref(true);
 const error = ref('');
-const actionLoading = ref(null);
-
-// Modal state
-const showConfirmationModal = ref(false);
-const latestBookingDetails = ref({});
 
 const fetchAll = async () => {
   try {
@@ -231,28 +217,7 @@ const groupedSlots = computed(() => {
 
 const alreadyBooked = (slotId) => myBookingSlotIds.value.has(slotId);
 
-const bookSlot = async (slotId) => {
-  actionLoading.value = slotId;
-  try {
-    const res = await api.post(`slots/${slotId}/book`);
-    if (res.data.type === 'WAITLISTED') {
-      const slot = slots.value.find(s => s.id === slotId);
-      if (slot) slot.available_capacity = 0;
-      latestBookingDetails.value = { type: 'WAITLISTED', slot, partySize: 1 };
-      showConfirmationModal.value = true;
-    } else {
-      const slot = slots.value.find(s => s.id === slotId);
-      if (slot) slot.available_capacity = Math.max(0, slot.available_capacity - 1);
-      myBookingSlotIds.value.add(slotId);
-      latestBookingDetails.value = { type: 'CONFIRMED', slot, partySize: 1 };
-      showConfirmationModal.value = true;
-    }
-  } catch (err) {
-    toastError(err.response?.data?.error || 'Failed to process request.');
-  } finally {
-    actionLoading.value = null;
-  }
-}
+// Booking is now handled by BookAppointmentPage.vue
 </script>
 
 <style scoped>

@@ -32,6 +32,9 @@ function getSlot(slotId) {
 router.post("/slots/:slotId/book", requireAuth, async (req, res) => {
   const slotId = Number(req.params.slotId);
   const userId = req.user.id;
+  const { party_size, special_requests } = req.body || {};
+  const pSize = party_size || 1;
+  const sReq = special_requests || null;
 
   try {
     const slot = await getSlot(slotId);
@@ -50,8 +53,8 @@ router.post("/slots/:slotId/book", requireAuth, async (req, res) => {
         if (confirmedCount < slot.capacity) {
           // create booking
           db.run(
-            `INSERT INTO bookings (slot_id, user_id, status) VALUES (?, ?, 'CONFIRMED')`,
-            [slotId, userId],
+            `INSERT INTO bookings (slot_id, user_id, status, party_size, special_requests) VALUES (?, ?, 'CONFIRMED', ?, ?)`,
+            [slotId, userId, pSize, sReq],
             function (err2) {
               if (err2) return res.status(500).json({ error: err2.message });
               return res.json({
@@ -70,8 +73,8 @@ router.post("/slots/:slotId/book", requireAuth, async (req, res) => {
               if (waiting) return res.status(409).json({ error: "Already on waitlist" });
 
               db.run(
-                `INSERT INTO waitlist (slot_id, user_id, status) VALUES (?, ?, 'WAITING')`,
-                [slotId, userId],
+                `INSERT INTO waitlist (slot_id, user_id, status, party_size, special_requests) VALUES (?, ?, 'WAITING', ?, ?)`,
+                [slotId, userId, pSize, sReq],
                 function (err4) {
                   if (err4) return res.status(500).json({ error: err4.message });
                   return res.json({
@@ -99,9 +102,10 @@ router.post("/bookings/:bookingId/cancel", requireAuth, (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!booking) return res.status(404).json({ error: "Booking not found" });
 
-    // Only the owner can cancel (or later we can allow host)
-    if (booking.user_id !== userId) return res.status(403).json({ error: "Forbidden" });
-
+    // Allow owner OR any HOST to cancel
+    if (booking.user_id !== userId && req.user.role !== 'HOST') {
+      return res.status(403).json({ error: "Forbidden" });
+    }
     // Transaction: cancel + promote 1 from waitlist
     db.serialize(() => {
       db.run("BEGIN TRANSACTION");
@@ -167,6 +171,31 @@ router.post("/bookings/:bookingId/cancel", requireAuth, (req, res) => {
         }
       );
     });
+  });
+});
+
+// CANCEL waitlist entry
+router.post("/waitlist/:waitlistId/cancel", requireAuth, (req, res) => {
+  const waitlistId = Number(req.params.waitlistId);
+  const userId = req.user.id;
+
+  db.get(`SELECT * FROM waitlist WHERE id = ?`, [waitlistId], (err, waitlist) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!waitlist) return res.status(404).json({ error: "Waitlist not found" });
+
+    // Allow owner OR any HOST to cancel
+    if (waitlist.user_id !== userId && req.user.role !== 'HOST') {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    db.run(
+      `UPDATE waitlist SET status='REMOVED' WHERE id = ?`,
+      [waitlistId],
+      (err2) => {
+        if (err2) return res.status(500).json({ error: err2.message });
+        return res.json({ canceled: true });
+      }
+    );
   });
 });
 

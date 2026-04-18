@@ -3,6 +3,7 @@ import LoginPage from "../pages/LoginPage.vue";
 import SlotsPage from "../pages/SlotsPage.vue";
 import MyBookingsPage from "../pages/MyBookingsPage.vue";
 import HostDashboardPage from "../pages/HostDashboardPage.vue";
+import BookAppointmentPage from "../pages/BookAppointmentPage.vue";
 
 const routes = [
   { path: "/", redirect: "/login" },
@@ -10,6 +11,7 @@ const routes = [
   { path: "/slots", name: "slots", component: SlotsPage, meta: { requiresAuth: true, requiresUser: true } },
   { path: "/bookings", name: "bookings", component: MyBookingsPage, meta: { requiresAuth: true, requiresUser: true } },
   { path: "/host", name: "host", component: HostDashboardPage, meta: { requiresAuth: true, requiresHost: true } },
+  { path: "/book/:id", name: "book", component: BookAppointmentPage, meta: { requiresAuth: true, requiresUser: true } },
 ];
 
 const router = createRouter({

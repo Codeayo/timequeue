@@ -153,9 +153,16 @@
                   <div class="waitlist-note">Auto-promoted when a seat opens</div>
                 </div>
 
-                <!-- Status -->
+                <!-- Status + Action -->
                 <div class="booking-right">
                   <span class="status-chip waitlist-chip">⏳ Waiting</span>
+                  <button
+                    class="cancel-btn"
+                    @click="cancelWaitlist(w.waitlist_id)"
+                    :disabled="actionLoading === w.waitlist_id"
+                  >
+                    {{ actionLoading === w.waitlist_id ? 'Removing...' : 'Leave Waitlist' }}
+                  </button>
                 </div>
               </div>
             </div>
@@ -237,6 +244,20 @@ const cancelBooking = async (bookingId) => {
     toastSuccess('Reservation cancelled.');
   } catch (err) {
     toastError(err.response?.data?.error || 'Failed to cancel.');
+  } finally {
+    actionLoading.value = null;
+  }
+};
+
+const cancelWaitlist = async (waitlistId) => {
+  if (!confirm('Leave the waitlist?')) return;
+  actionLoading.value = waitlistId;
+  try {
+    await api.post(`waitlist/${waitlistId}/cancel`);
+    waitlists.value = waitlists.value.filter(w => w.waitlist_id !== waitlistId);
+    toastSuccess('Removed from waitlist.');
+  } catch (err) {
+    toastError(err.response?.data?.error || 'Failed to leave waitlist.');
   } finally {
     actionLoading.value = null;
   }
