@@ -33,6 +33,8 @@ db.serialize(() => {
       slot_id INTEGER NOT NULL,
       user_id INTEGER NOT NULL,
       status TEXT NOT NULL CHECK(status IN ('CONFIRMED','CANCELED')) DEFAULT 'CONFIRMED',
+      party_size INTEGER NOT NULL DEFAULT 1,
+      special_requests TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (slot_id) REFERENCES slots(id),
       FOREIGN KEY (user_id) REFERENCES users(id)
@@ -46,6 +48,8 @@ db.serialize(() => {
       slot_id INTEGER NOT NULL,
       user_id INTEGER NOT NULL,
       status TEXT NOT NULL CHECK(status IN ('WAITING','PROMOTED','REMOVED')) DEFAULT 'WAITING',
+      party_size INTEGER NOT NULL DEFAULT 1,
+      special_requests TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (slot_id) REFERENCES slots(id),
       FOREIGN KEY (user_id) REFERENCES users(id)

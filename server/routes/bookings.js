@@ -204,7 +204,7 @@ router.get("/bookings", requireAuth, (req, res) => {
   const userId = req.user.id;
   
   db.all(
-    `SELECT b.id as booking_id, b.slot_id, b.status as booking_status, s.start_time, s.end_time 
+    `SELECT b.id as booking_id, b.slot_id, b.status as booking_status, b.party_size, b.special_requests, s.start_time, s.end_time 
      FROM bookings b 
      JOIN slots s ON b.slot_id = s.id 
      WHERE b.user_id = ? AND b.status != 'CANCELED'`,
@@ -213,7 +213,7 @@ router.get("/bookings", requireAuth, (req, res) => {
       if (err) return res.status(500).json({ error: err.message });
       
       db.all(
-        `SELECT w.id as waitlist_id, w.slot_id, w.status as waitlist_status, s.start_time, s.end_time 
+        `SELECT w.id as waitlist_id, w.slot_id, w.status as waitlist_status, w.party_size, w.special_requests, s.start_time, s.end_time 
          FROM waitlist w 
          JOIN slots s ON w.slot_id = s.id 
          WHERE w.user_id = ? AND w.status = 'WAITING'`,

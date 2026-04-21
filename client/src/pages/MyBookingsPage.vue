@@ -93,7 +93,10 @@
                 <!-- Info -->
                 <div class="booking-info">
                   <div class="booking-time">{{ formatTimeOnly(b.start_time) }} – {{ formatTimeOnly(b.end_time) }}</div>
-                  <div class="booking-date-str">{{ formatDayMonth(b.start_time).weekday }}, {{ formatDayMonth(b.start_time).month }} {{ formatDayMonth(b.start_time).day }}</div>
+                  <div class="booking-date-str">
+                    {{ formatDayMonth(b.start_time).weekday }}, {{ formatDayMonth(b.start_time).month }} {{ formatDayMonth(b.start_time).day }}
+                    <span class="party-size-pill">🧑‍🤝‍🧑 Party of {{ b.party_size }}</span>
+                  </div>
                   <div class="booking-countdown" v-if="countdown(b.start_time)">
                     <span class="cd-dot"></span> {{ countdown(b.start_time) }}
                   </div>
@@ -149,7 +152,10 @@
                 <!-- Info -->
                 <div class="booking-info">
                   <div class="booking-time">{{ formatTimeOnly(w.start_time) }} – {{ formatTimeOnly(w.end_time) }}</div>
-                  <div class="booking-date-str">{{ formatDayMonth(w.start_time).weekday }}, {{ formatDayMonth(w.start_time).month }} {{ formatDayMonth(w.start_time).day }}</div>
+                  <div class="booking-date-str">
+                    {{ formatDayMonth(w.start_time).weekday }}, {{ formatDayMonth(w.start_time).month }} {{ formatDayMonth(w.start_time).day }}
+                    <span class="party-size-pill">🧑‍🤝‍🧑 Party of {{ w.party_size }}</span>
+                  </div>
                   <div class="waitlist-note">Auto-promoted when a seat opens</div>
                 </div>
 
@@ -535,7 +541,19 @@ const cancelWaitlist = async (waitlistId) => {
 /* Booking info */
 .booking-info { flex: 1; min-width: 0; }
 .booking-time  { font-size: 1rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.1rem; }
-.booking-date-str { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+.booking-date-str { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+.party-size-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: var(--secondary-light);
+  color: var(--secondary);
+  padding: 0.15em 0.5em;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
 
 .booking-countdown {
   display: inline-flex;
