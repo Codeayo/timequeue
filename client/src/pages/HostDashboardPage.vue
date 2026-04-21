@@ -77,7 +77,11 @@
             </div>
             <div class="field">
               <label>Start Time</label>
-              <input type="time" v-model="form.time" class="input-field" required />
+              <input type="time" v-model="form.start_time" class="input-field" required />
+            </div>
+            <div class="field">
+              <label>End Time</label>
+              <input type="time" v-model="form.end_time" class="input-field" required />
             </div>
             <div class="field">
               <label>Table Capacity</label>
@@ -212,7 +216,7 @@ useScrollReveal();
 
 const mySlots = ref([]);
 const loadingSlots = ref(true);
-const form = ref({ date: '', time: '', capacity: 1 });
+const form = ref({ date: '', start_time: '', end_time: '', capacity: 1 });
 const creating = ref(false);
 const createError = ref('');
 const expandedSlot = ref(null);
@@ -242,9 +246,12 @@ const handleCreateSlot = async () => {
   createError.value = '';
   creating.value = true;
   try {
-    const startDateTimeStr = `${form.value.date}T${form.value.time}`;
+    const startDateTimeStr = `${form.value.date}T${form.value.start_time}`;
     const startDate = new Date(startDateTimeStr);
-    const endDate = new Date(startDate.getTime() + 1.5 * 60 * 60 * 1000); // Auto-add 1.5 hours
+    
+    // Automatically use the same date for the end time
+    const endDateTimeStr = `${form.value.date}T${form.value.end_time}`;
+    const endDate = new Date(endDateTimeStr);
 
     const payload = {
       start_time: startDate.toISOString(),
@@ -252,7 +259,7 @@ const handleCreateSlot = async () => {
       capacity: form.value.capacity
     };
     await api.post('slots', payload);
-    form.value = { date: '', time: '', capacity: 1 };
+    form.value = { date: '', start_time: '', end_time: '', capacity: 1 };
     toastSuccess('Availability slot published successfully!');
     await fetchMySlots();
   } catch (err) {

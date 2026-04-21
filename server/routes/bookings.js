@@ -8,7 +8,7 @@ const router = express.Router();
 function countConfirmed(slotId) {
   return new Promise((resolve, reject) => {
     db.get(
-      `SELECT COUNT(*) AS count FROM bookings WHERE slot_id = ? AND status = 'CONFIRMED'`,
+      `SELECT COALESCE(SUM(party_size), 0) AS count FROM bookings WHERE slot_id = ? AND status = 'CONFIRMED'`,
       [slotId],
       (err, row) => {
         if (err) reject(err);

@@ -36,7 +36,7 @@ router.get("/", (req, res) => {
     SELECT 
       s.*, 
       s.capacity as total_capacity,
-      (s.capacity - (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED')) as available_capacity
+      (s.capacity - COALESCE((SELECT SUM(party_size) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED'), 0)) as available_capacity
     FROM slots s
     WHERE s.start_time >= datetime('now') 
     ORDER BY s.start_time ASC
@@ -53,7 +53,7 @@ router.get("/mine", requireAuth, requireRole("HOST"), (req, res) => {
     SELECT 
       s.*, 
       s.capacity as total_capacity,
-      (s.capacity - (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED')) as available_capacity,
+      (s.capacity - COALESCE((SELECT SUM(party_size) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED'), 0)) as available_capacity,
       (SELECT COUNT(*) FROM waitlist w WHERE w.slot_id = s.id AND w.status = 'WAITING') as waitlist_count
     FROM slots s
     WHERE s.host_id = ? 
@@ -71,7 +71,7 @@ router.get("/:id", (req, res) => {
     SELECT 
       s.*, 
       s.capacity as total_capacity,
-      (s.capacity - (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED')) as available_capacity,
+      (s.capacity - COALESCE((SELECT SUM(party_size) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED'), 0)) as available_capacity,
       (SELECT COUNT(*) FROM waitlist w WHERE w.slot_id = s.id AND w.status = 'WAITING') as waitlist_count
     FROM slots s
     WHERE s.id = ?
