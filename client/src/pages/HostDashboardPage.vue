@@ -123,7 +123,11 @@
                   <h4>{{ formatDateTime(slot.start_time) }}</h4>
                   <p class="text-muted text-sm italic">{{ slot.available_capacity }} seat{{ slot.available_capacity !== 1 ? 's' : '' }} left of {{ slot.total_capacity }}</p>
                   <div class="slot-mini-bar-wrap">
-                    <div class="slot-mini-bar" :style="{ width: ((slot.total_capacity - slot.available_capacity) / slot.total_capacity * 100) + '%' }" :class="slot.available_capacity === 0 ? 'full' : ''"></div>
+                    <div 
+                      class="slot-mini-bar" 
+                      :style="{ width: slot.available_capacity === 0 ? '100%' : ((slot.available_capacity / slot.total_capacity) * 100) + '%' }" 
+                      :class="slot.available_capacity === 0 ? 'full' : ''"
+                    ></div>
                   </div>
                 </div>
                 <div class="slot-actions-group">
