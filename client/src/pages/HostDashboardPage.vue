@@ -72,12 +72,12 @@
 
           <form @submit.prevent="handleCreateSlot" class="create-form">
             <div class="field">
-              <label>Start Time</label>
-              <input type="datetime-local" v-model="form.start_time" class="input-field" required />
+              <label>Date</label>
+              <input type="date" v-model="form.date" class="input-field" required />
             </div>
             <div class="field">
-              <label>End Time</label>
-              <input type="time" v-model="form.end_time" class="input-field" required />
+              <label>Start Time</label>
+              <input type="time" v-model="form.time" class="input-field" required />
             </div>
             <div class="field">
               <label>Table Capacity</label>
@@ -212,7 +212,7 @@ useScrollReveal();
 
 const mySlots = ref([]);
 const loadingSlots = ref(true);
-const form = ref({ start_time: '', end_time: '', capacity: 1 });
+const form = ref({ date: '', time: '', capacity: 1 });
 const creating = ref(false);
 const createError = ref('');
 const expandedSlot = ref(null);
@@ -242,14 +242,17 @@ const handleCreateSlot = async () => {
   createError.value = '';
   creating.value = true;
   try {
-    const datePart = form.value.start_time.split('T')[0];
+    const startDateTimeStr = `${form.value.date}T${form.value.time}`;
+    const startDate = new Date(startDateTimeStr);
+    const endDate = new Date(startDate.getTime() + 1.5 * 60 * 60 * 1000); // Auto-add 1.5 hours
+
     const payload = {
-      start_time: new Date(form.value.start_time).toISOString(),
-      end_time: new Date(`${datePart}T${form.value.end_time}`).toISOString(),
+      start_time: startDate.toISOString(),
+      end_time: endDate.toISOString(),
       capacity: form.value.capacity
     };
     await api.post('slots', payload);
-    form.value = { start_time: '', end_time: '', capacity: 1 };
+    form.value = { date: '', time: '', capacity: 1 };
     toastSuccess('Availability slot published successfully!');
     await fetchMySlots();
   } catch (err) {
