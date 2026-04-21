@@ -77,7 +77,7 @@
             </div>
             <div class="field">
               <label>End Time</label>
-              <input type="datetime-local" v-model="form.end_time" class="input-field" required />
+              <input type="time" v-model="form.end_time" class="input-field" required />
             </div>
             <div class="field">
               <label>Table Capacity</label>
@@ -242,9 +242,10 @@ const handleCreateSlot = async () => {
   createError.value = '';
   creating.value = true;
   try {
+    const datePart = form.value.start_time.split('T')[0];
     const payload = {
       start_time: new Date(form.value.start_time).toISOString(),
-      end_time: new Date(form.value.end_time).toISOString(),
+      end_time: new Date(`${datePart}T${form.value.end_time}`).toISOString(),
       capacity: form.value.capacity
     };
     await api.post('slots', payload);
