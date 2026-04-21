@@ -217,7 +217,7 @@ const loadingDetails = ref(false);
 
 // KPI computed values
 const totalConfirmed  = computed(() => mySlots.value.reduce((s, sl) => s + ((sl.total_capacity ?? 0) - (sl.available_capacity ?? 0)), 0));
-const totalWaitlisted = computed(() => 0); // waitlist count requires per-slot fetch; shown in roster
+const totalWaitlisted = computed(() => mySlots.value.reduce((s, sl) => s + (sl.waitlist_count ?? 0), 0));
 const totalCapacity   = computed(() => mySlots.value.reduce((s, sl) => s + (sl.total_capacity ?? 0), 0));
 const todayLabel = computed(() => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }));
 

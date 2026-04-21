@@ -53,7 +53,8 @@ router.get("/mine", requireAuth, requireRole("HOST"), (req, res) => {
     SELECT 
       s.*, 
       s.capacity as total_capacity,
-      (s.capacity - (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED')) as available_capacity
+      (s.capacity - (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'CONFIRMED')) as available_capacity,
+      (SELECT COUNT(*) FROM waitlist w WHERE w.slot_id = s.id AND w.status = 'WAITING') as waitlist_count
     FROM slots s
     WHERE s.host_id = ? 
     ORDER BY s.start_time ASC
