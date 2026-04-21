@@ -28,7 +28,7 @@
             </div>
           </div>
           <div class="status-badge" :class="isFull ? 'full' : 'avail'">
-            {{ isFull ? 'Waitlist Only' : `${slot.available_capacity} Seats Available` }}
+            {{ isFull ? `Waitlist Only (${slot.waitlist_count} waiting)` : `${slot.available_capacity} Seats Available` }}
           </div>
         </div>
 
