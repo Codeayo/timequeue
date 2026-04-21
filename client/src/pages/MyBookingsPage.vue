@@ -145,7 +145,7 @@
               >
                 <!-- Position badge -->
                 <div class="date-badge waitlist-badge">
-                  <span class="pos-num">#{{ idx + 1 }}</span>
+                  <span class="pos-num">#{{ w.queue_position }}</span>
                   <span class="bm">queue</span>
                 </div>
 

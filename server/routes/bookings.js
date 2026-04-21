@@ -213,7 +213,9 @@ router.get("/bookings", requireAuth, (req, res) => {
       if (err) return res.status(500).json({ error: err.message });
       
       db.all(
-        `SELECT w.id as waitlist_id, w.slot_id, w.status as waitlist_status, w.party_size, w.special_requests, s.start_time, s.end_time 
+        `SELECT 
+           w.id as waitlist_id, w.slot_id, w.status as waitlist_status, w.party_size, w.special_requests, s.start_time, s.end_time,
+           (SELECT COUNT(*) FROM waitlist w2 WHERE w2.slot_id = w.slot_id AND w2.status = 'WAITING' AND w2.created_at <= w.created_at) as queue_position
          FROM waitlist w 
          JOIN slots s ON w.slot_id = s.id 
          WHERE w.user_id = ? AND w.status = 'WAITING'`,
