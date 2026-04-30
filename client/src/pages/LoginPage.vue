@@ -71,7 +71,7 @@ const authStore = useAuthStore();
 // Redirect if already logged in
 onMounted(() => {
   if (authStore.isAuthenticated) {
-    router.push(authStore.isHost ? '/host' : '/slots');
+    router.push(authStore.isHost ? '/host' : '/bookings');
   }
 });
 
@@ -101,7 +101,7 @@ const handleSubmit = async () => {
       : { email: form.email, password: form.password };
     const res = await api.post(endpoint, payload);
     authStore.setAuth(res.data.user, res.data.token);
-    router.push(res.data.user.role === 'HOST' ? '/host' : '/slots');
+    router.push(res.data.user.role === 'HOST' ? '/host' : '/bookings');
   } catch (err) {
     error.value = err.response?.data?.error || 'An unexpected error occurred.';
   } finally {

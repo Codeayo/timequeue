@@ -26,13 +26,13 @@ router.beforeEach((to, from, next) => {
 
   // Already logged in — redirect away from login
   if (to.name === 'login' && token) {
-    return next(user?.role === 'HOST' ? '/host' : '/slots');
+    return next(user?.role === 'HOST' ? '/host' : '/bookings');
   }
   if (to.meta.requiresAuth && !token) {
     return next("/login");
   }
   if (to.meta.requiresHost && user?.role !== "HOST") {
-    return next("/slots");
+    return next("/bookings");
   }
   if (to.meta.requiresUser && user?.role === "HOST") {
     return next("/host");
